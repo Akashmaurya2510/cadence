@@ -2,11 +2,16 @@
 <html lang="en" data-theme="graphite">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Cadence</title>
   <meta name="description" content="A calm pomodoro timer with reports, tasks, and OLED-ready themes.">
   <meta name="theme-color" content="#15171b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body data-mode="focus">
@@ -35,7 +40,7 @@
         </div>
       </div>
       <button class="icon-btn" id="settingsBtn" aria-label="Open settings" title="Settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1 1.56V21a2 2 0 11-4 0v-.09a1.7 1.7 0 00-1-1.56 1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.7 1.7 0 00.34-1.87 1.7 1.7 0 00-1.56-1H3a2 2 0 110-4h.09a1.7 1.7 0 001.56-1 1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06a1.7 1.7 0 001.87.34H9a1.7 1.7 0 001-1.56V3a2 2 0 114 0v.09a1.7 1.7 0 001 1.56 1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l-.06.06a1.7 1.7 0 00-.34 1.87V9a1.7 1.7 0 001.56 1H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.56 1z"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1 1.56V21a2 2 0 11-4 0v-.09a1.7 1.7 0 00-1-1.56 1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.7 1.7 0 00.34-1.87 1.7 1.7 0 00-1.56-1H3a2 2 0 110-4h.09a1.7 1.7 0 001.56-1 1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06a1.7 1.7 0 001.87.34H9a1.7 1.7 0 001-1.56V3a2 2 0 114 0v.09a1.7 1.7 0 001 1.56 1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l.06.06a1.7 1.7 0 00-.34 1.87V9a1.7 1.7 0 001.56 1H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.56 1z"/></svg>
       </button>
     </div>
   </header>
@@ -49,7 +54,7 @@
       </div>
       <div class="today-line" id="todayLine">0 sessions today</div>
     </div>
-    <div class="ring-stage" id="ringStage">
+    <div class="ring-stage" id="ringStage" role="button" tabindex="0" aria-label="Timer. Tap to show or hide chrome while focusing.">
       <svg class="ring" viewBox="0 0 280 280">
         <g id="ticks"></g>
         <circle class="ring-track" cx="140" cy="140" r="120"></circle>
@@ -58,8 +63,10 @@
       <div class="ring-center">
         <div class="time" id="timeDisplay">25:00</div>
         <div class="state-label" id="stateLabel">Ready</div>
+        <div class="up-next" id="upNext"></div>
       </div>
     </div>
+    <p class="zen-hint" id="zenHint">Tap the timer to show controls</p>
     <div class="pips" id="pips"></div>
     <div class="controls">
       <button class="btn btn-secondary" id="resetBtn" aria-label="Reset session">
@@ -75,9 +82,15 @@
     <div class="tasks">
       <h2>This session <span class="today-line" id="openCount"></span></h2>
       <form class="task-form" id="taskForm">
-        <input id="taskInput" placeholder="Add a task" aria-label="New task">
+        <input id="taskInput" placeholder="Add a task" aria-label="New task" autocomplete="off">
         <button type="submit" aria-label="Add">+</button>
       </form>
+      <div class="task-tools" id="taskTools">
+        <button class="chip on" data-task-view="open">Open</button>
+        <button class="chip" data-task-view="today">Today</button>
+        <button class="chip" data-task-view="later">Later</button>
+        <button class="chip" data-task-view="paused">Paused</button>
+      </div>
       <div id="taskList"></div>
     </div>
     <footer class="hint">Space to start · pause · keep the rhythm</footer>
@@ -89,16 +102,32 @@
       <h1>Your rhythm</h1>
       <p id="reportLead">Complete a focus session and this page fills in.</p>
       <div class="banner" id="demoBanner">Sample history is loaded so you can explore the charts. Clear or replace it in Settings.</div>
+      <div class="banner nudge" id="exportNudge" hidden>
+        <span>It has been a while since you exported a backup.</span>
+        <button type="button" class="text-btn" id="nudgeExport">Export now</button>
+      </div>
+      <div class="report-actions">
+        <button class="ghost-btn inline" id="pngBtn" type="button">Save report image</button>
+      </div>
     </div>
-    <div class="stats">
+    <div class="stats" id="statsGrid">
       <div class="stat"><div class="l">Today</div><div class="v" id="statToday">0m</div><div class="h" id="statTodayH">0 / 8 goal</div></div>
-      <div class="stat"><div class="l">This week</div><div class="v" id="statWeek">0m</div><div class="h" id="statWeekH">0 sessions</div></div>
-      <div class="stat"><div class="l">Streak</div><div class="v" id="statStreak">0d</div><div class="h">consecutive days</div></div>
-      <div class="stat"><div class="l">Month</div><div class="v" id="statMonth">0m</div><div class="h">completed focus</div></div>
+      <div class="stat"><div class="l">This week</div><div class="v" id="statWeek">0m</div><div class="h" id="statWeekH">0 / 40 goal</div></div>
+      <div class="stat"><div class="l">Streak</div><div class="v" id="statStreak">0d</div><div class="h" id="statStreakH">consecutive days</div></div>
+      <div class="stat"><div class="l">Month</div><div class="v" id="statMonth">0m</div><div class="h" id="statMonthH">0 / 160 goal</div></div>
     </div>
+    <div class="stats stats-secondary">
+      <div class="stat"><div class="l">Longest streak</div><div class="v" id="statLongest">0d</div><div class="h">all time</div></div>
+      <div class="stat"><div class="l">Avg focus</div><div class="v" id="statAvg">0m</div><div class="h" id="statRate">completion —</div></div>
+    </div>
+    <p class="callout" id="statCallout"></p>
     <div class="card"><h2>Last 7 days</h2><div class="bars" id="weekBars"></div></div>
     <div class="card"><h2>Activity</h2><div class="heat"><div class="heat-grid" id="heatGrid"></div></div></div>
     <div class="card"><h2>Focus by hour this week</h2><div class="bars" id="hourBars"></div></div>
+    <div class="card" id="taskBreakdownCard">
+      <h2>Time by task</h2>
+      <div id="taskBreakdown"></div>
+    </div>
   </section>
 
   <section class="page wide" data-page="log">
@@ -113,7 +142,14 @@
       <button class="chip" data-filter="short">Short</button>
       <button class="chip" data-filter="long">Long</button>
     </div>
+    <div class="log-tools">
+      <input id="logSearch" type="search" placeholder="Search tasks or notes" aria-label="Search log" autocomplete="off">
+      <select id="logTaskFilter" aria-label="Filter by task">
+        <option value="all">All tasks</option>
+      </select>
+    </div>
     <div id="logList"></div>
+    <button class="ghost-btn" id="logMore" type="button" hidden>Load older sessions</button>
   </section>
 </div>
 
@@ -132,16 +168,31 @@
   <div class="field"><label>Long break <span class="val" id="vLong">15 min</span></label><input type="range" id="rLong" min="5" max="40" step="5" value="15"></div>
   <div class="field"><label>Long break after <span class="val" id="vInterval">4 sessions</span></label><input type="range" id="rInterval" min="2" max="8" step="1" value="4"></div>
   <div class="field"><label>Daily goal <span class="val" id="vGoal">8 sessions</span></label><input type="range" id="rGoal" min="1" max="16" step="1" value="8"></div>
-  <div class="toggle-row"><span>Auto-start next phase</span><div class="switch" id="switchAuto"></div></div>
-  <div class="toggle-row"><span>Sound on completion</span><div class="switch on" id="switchSound"></div></div>
-  <div class="toggle-row"><span>Tick while focusing</span><div class="switch" id="switchTick"></div></div>
-  <div class="toggle-row"><span>Desktop notifications</span><div class="switch" id="switchNotify"></div></div>
-  <p class="sub" style="margin-top:18px">Data</p>
+  <div class="field"><label>Weekly goal <span class="val" id="vWeekGoal">40 sessions</span></label><input type="range" id="rWeekGoal" min="4" max="80" step="1" value="40"></div>
+  <div class="field"><label>Monthly goal <span class="val" id="vMonthGoal">160 sessions</span></label><input type="range" id="rMonthGoal" min="8" max="320" step="4" value="160"></div>
+  <div class="toggle-row"><span>Auto-start next phase</span><div class="switch" id="switchAuto" role="switch" aria-checked="false"></div></div>
+  <div class="toggle-row"><span>Sound on completion</span><div class="switch on" id="switchSound" role="switch" aria-checked="true"></div></div>
+  <div class="field sound-field">
+    <label>Completion sound</label>
+    <div class="sound-picks" id="soundPicks">
+      <button type="button" class="chip on" data-sound="chime">Chime</button>
+      <button type="button" class="chip" data-sound="bell">Bell</button>
+      <button type="button" class="chip" data-sound="wood">Wood</button>
+    </div>
+  </div>
+  <div class="toggle-row"><span>Tick while focusing</span><div class="switch" id="switchTick" role="switch" aria-checked="false"></div></div>
+  <div class="toggle-row"><span>Vibrate on completion</span><div class="switch on" id="switchVibrate" role="switch" aria-checked="true"></div></div>
+  <div class="toggle-row"><span>Desktop notifications</span><div class="switch" id="switchNotify" role="switch" aria-checked="false"></div></div>
+  <p class="sub section-label">Data</p>
   <button class="ghost-btn" id="exportBtn" type="button">Export report JSON</button>
+  <button class="ghost-btn" id="copyBtn" type="button">Copy data to clipboard</button>
   <button class="ghost-btn" id="importBtn" type="button">Import JSON</button>
   <input id="importFile" type="file" accept="application/json" hidden>
   <button class="ghost-btn" id="demoBtn" type="button">Load sample history</button>
-  <button class="ghost-btn" id="clearBtn" type="button">Clear all data</button>
+  <button class="ghost-btn danger" id="clearBtn" type="button">Clear all data</button>
+  <p class="sub section-label">App</p>
+  <button class="ghost-btn" id="tourReplay" type="button">Replay welcome tour</button>
+  <button class="ghost-btn" id="whatsNewBtn" type="button">What's new</button>
   <button class="drawer-close" id="closeDrawer">Done</button>
 </div>
 
@@ -153,6 +204,7 @@
     <div class="krow"><kbd>R</kbd><span>Reset current phase</span></div>
     <div class="krow"><kbd>N or S</kbd><span>Skip to next phase</span></div>
     <div class="krow"><kbd>1 / 2 / 3</kbd><span>Focus, short, long</span></div>
+    <div class="krow"><kbd>T</kbd><span>Focus the task input</span></div>
     <div class="krow"><kbd>,</kbd><span>Open settings</span></div>
     <div class="krow"><kbd>?</kbd><span>This list</span></div>
     <button class="drawer-close" id="closeHelp">Close</button>
@@ -169,6 +221,47 @@
       <button class="drawer-close" id="tourNext" type="button">Next</button>
     </div>
   </div>
+</div>
+
+<div class="modal" id="confirmModal">
+  <div class="box">
+    <h3 id="confirmTitle">Are you sure?</h3>
+    <p id="confirmText"></p>
+    <div class="tour-actions">
+      <button class="ghost-btn" id="confirmCancel" type="button">Cancel</button>
+      <button class="drawer-close" id="confirmOk" type="button">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="noteModal">
+  <div class="box">
+    <h3>Session complete</h3>
+    <p>What did you work on? Skip anytime.</p>
+    <textarea id="noteInput" rows="3" maxlength="280" placeholder="A short note for this focus block"></textarea>
+    <div class="tour-actions">
+      <button class="ghost-btn" id="noteSkip" type="button">Skip</button>
+      <button class="drawer-close" id="noteSave" type="button">Save note</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="changelogModal">
+  <div class="box changelog-box">
+    <div class="tour-kicker">New in Cadence</div>
+    <h3 id="changeTitle">What's new</h3>
+    <p id="changeBlurb"></p>
+    <div id="changeList" class="change-list"></div>
+    <div class="tour-actions">
+      <button class="ghost-btn" id="changeLater" type="button">Later</button>
+      <button class="drawer-close" id="changeOk" type="button">Got it</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden>
+  <span id="toastMsg"></span>
+  <button type="button" id="toastAction">Undo</button>
 </div>
 
 <script src="js/app.js"></script>
