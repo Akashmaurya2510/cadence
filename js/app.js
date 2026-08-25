@@ -927,25 +927,40 @@
   $("closeDrawer").onclick = shutDrawer;
   backdrop.onclick = shutDrawer;
 
-  function bindRange(id, key, suffix, valId) {
-    const el = $(id);
-    el.value = settings[key];
-    $(valId).textContent = settings[key] + " " + suffix;
-    el.oninput = () => {
-      settings[key] = +el.value;
-      $(valId).textContent = settings[key] + " " + suffix;
-      if (!state.running) state.secondsLeft = durationFor(state.mode);
-      renderTimer(); save();
-      if (state.page === "reports") renderReports();
-    };
+  function refreshStepper(el) {
+    const key = el.dataset.key, min = +el.dataset.min, max = +el.dataset.max, suffix = el.dataset.suffix;
+    const v = settings[key];
+    $(el.dataset.val).textContent = v + " " + suffix;
+    el.querySelector(".step-fill").style.width = (((v - min) / (max - min)) * 100) + "%";
+    el.querySelectorAll(".step-btn").forEach((b) => {
+      const dir = +b.dataset.dir;
+      b.disabled = dir < 0 ? v <= min : v >= max;
+    });
   }
-  bindRange("rFocus", "focus", "min", "vFocus");
-  bindRange("rShort", "short", "min", "vShort");
-  bindRange("rLong", "long", "min", "vLong");
-  bindRange("rInterval", "interval", "sessions", "vInterval");
-  bindRange("rGoal", "dailyGoal", "sessions", "vGoal");
-  bindRange("rWeekGoal", "weeklyGoal", "sessions", "vWeekGoal");
-  bindRange("rMonthGoal", "monthlyGoal", "sessions", "vMonthGoal");
+  function stepperChange(el, dir) {
+    const key = el.dataset.key, min = +el.dataset.min, max = +el.dataset.max, step = +el.dataset.step;
+    settings[key] = Math.min(max, Math.max(min, settings[key] + dir * step));
+    refreshStepper(el);
+    if (!state.running) state.secondsLeft = durationFor(state.mode);
+    renderTimer(); save();
+    if (state.page === "reports") renderReports();
+  }
+  document.querySelectorAll(".stepper").forEach((el) => {
+    refreshStepper(el);
+    el.querySelectorAll(".step-btn").forEach((btn) => {
+      const dir = +btn.dataset.dir;
+      let holdTimeout = null, holdInterval = null;
+      const fire = () => { if (!btn.disabled) stepperChange(el, dir); };
+      const stopHold = () => { clearTimeout(holdTimeout); clearInterval(holdInterval); holdTimeout = holdInterval = null; };
+      btn.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        fire();
+        holdTimeout = setTimeout(() => { holdInterval = setInterval(fire, 90); }, 450);
+      });
+      ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => btn.addEventListener(ev, stopHold));
+    });
+  });
+  function refreshAllSteppers() { document.querySelectorAll(".stepper").forEach(refreshStepper); }
 
   function bindSwitch(id, key) {
     const el = $(id);
@@ -1119,13 +1134,7 @@
 
   function renderAll() {
     setTheme(state.theme);
-    $("rFocus").value = settings.focus; $("vFocus").textContent = settings.focus + " min";
-    $("rShort").value = settings.short; $("vShort").textContent = settings.short + " min";
-    $("rLong").value = settings.long; $("vLong").textContent = settings.long + " min";
-    $("rInterval").value = settings.interval; $("vInterval").textContent = settings.interval + " sessions";
-    $("rGoal").value = settings.dailyGoal; $("vGoal").textContent = settings.dailyGoal + " sessions";
-    $("rWeekGoal").value = settings.weeklyGoal; $("vWeekGoal").textContent = settings.weeklyGoal + " sessions";
-    $("rMonthGoal").value = settings.monthlyGoal; $("vMonthGoal").textContent = settings.monthlyGoal + " sessions";
+    refreshAllSteppers();
     $("switchAuto").classList.toggle("on", settings.autoStart);
     $("switchSound").classList.toggle("on", settings.sound);
     $("switchTick").classList.toggle("on", settings.tickSound);

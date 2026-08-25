@@ -163,13 +163,48 @@
 <div class="drawer" id="drawer">
   <h2>Settings</h2>
   <p class="sub">Durations, rhythm, and how Cadence talks back.</p>
-  <div class="field"><label>Focus length <span class="val" id="vFocus">25 min</span></label><input type="range" id="rFocus" min="5" max="60" step="5" value="25"></div>
-  <div class="field"><label>Short break <span class="val" id="vShort">5 min</span></label><input type="range" id="rShort" min="1" max="20" step="1" value="5"></div>
-  <div class="field"><label>Long break <span class="val" id="vLong">15 min</span></label><input type="range" id="rLong" min="5" max="40" step="5" value="15"></div>
-  <div class="field"><label>Long break after <span class="val" id="vInterval">4 sessions</span></label><input type="range" id="rInterval" min="2" max="8" step="1" value="4"></div>
-  <div class="field"><label>Daily goal <span class="val" id="vGoal">8 sessions</span></label><input type="range" id="rGoal" min="1" max="16" step="1" value="8"></div>
-  <div class="field"><label>Weekly goal <span class="val" id="vWeekGoal">40 sessions</span></label><input type="range" id="rWeekGoal" min="4" max="80" step="1" value="40"></div>
-  <div class="field"><label>Monthly goal <span class="val" id="vMonthGoal">160 sessions</span></label><input type="range" id="rMonthGoal" min="8" max="320" step="4" value="160"></div>
+  <div class="field"><label>Focus length <span class="val" id="vFocus">25 min</span></label>
+    <div class="stepper" data-key="focus" data-min="5" data-max="60" data-step="5" data-suffix="min" data-val="vFocus">
+      <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease focus length">−</button>
+      <div class="step-bar"><div class="step-fill"></div></div>
+      <button type="button" class="step-btn" data-dir="1" aria-label="Increase focus length">+</button>
+    </div></div>
+  <div class="field"><label>Short break <span class="val" id="vShort">5 min</span></label>
+    <div class="stepper" data-key="short" data-min="1" data-max="20" data-step="1" data-suffix="min" data-val="vShort">
+      <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease short break">−</button>
+      <div class="step-bar"><div class="step-fill"></div></div>
+      <button type="button" class="step-btn" data-dir="1" aria-label="Increase short break">+</button>
+    </div></div>
+  <div class="field"><label>Long break <span class="val" id="vLong">15 min</span></label>
+    <div class="stepper" data-key="long" data-min="5" data-max="40" data-step="5" data-suffix="min" data-val="vLong">
+      <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease long break">−</button>
+      <div class="step-bar"><div class="step-fill"></div></div>
+      <button type="button" class="step-btn" data-dir="1" aria-label="Increase long break">+</button>
+    </div></div>
+  <div class="field"><label>Long break after <span class="val" id="vInterval">4 sessions</span></label>
+    <div class="stepper" data-key="interval" data-min="2" data-max="8" data-step="1" data-suffix="sessions" data-val="vInterval">
+      <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease long break interval">−</button>
+      <div class="step-bar"><div class="step-fill"></div></div>
+      <button type="button" class="step-btn" data-dir="1" aria-label="Increase long break interval">+</button>
+    </div></div>
+  <div class="field"><label>Daily goal <span class="val" id="vGoal">8 sessions</span></label>
+    <div class="stepper" data-key="dailyGoal" data-min="1" data-max="16" data-step="1" data-suffix="sessions" data-val="vGoal">
+      <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease daily goal">−</button>
+      <div class="step-bar"><div class="step-fill"></div></div>
+      <button type="button" class="step-btn" data-dir="1" aria-label="Increase daily goal">+</button>
+    </div></div>
+  <div class="field"><label>Weekly goal <span class="val" id="vWeekGoal">40 sessions</span></label>
+    <div class="stepper" data-key="weeklyGoal" data-min="4" data-max="80" data-step="1" data-suffix="sessions" data-val="vWeekGoal">
+      <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease weekly goal">−</button>
+      <div class="step-bar"><div class="step-fill"></div></div>
+      <button type="button" class="step-btn" data-dir="1" aria-label="Increase weekly goal">+</button>
+    </div></div>
+  <div class="field"><label>Monthly goal <span class="val" id="vMonthGoal">160 sessions</span></label>
+    <div class="stepper" data-key="monthlyGoal" data-min="8" data-max="320" data-step="4" data-suffix="sessions" data-val="vMonthGoal">
+      <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease monthly goal">−</button>
+      <div class="step-bar"><div class="step-fill"></div></div>
+      <button type="button" class="step-btn" data-dir="1" aria-label="Increase monthly goal">+</button>
+    </div></div>
   <div class="toggle-row"><span>Auto-start next phase</span><div class="switch" id="switchAuto" role="switch" aria-checked="false"></div></div>
   <div class="toggle-row"><span>Sound on completion</span><div class="switch on" id="switchSound" role="switch" aria-checked="true"></div></div>
   <div class="field sound-field">
