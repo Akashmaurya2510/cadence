@@ -108,7 +108,17 @@ Replay the tour or the changelog anytime from Settings.
 ```
 index.html
 css/styles.css
-js/app.js
+js/01-core.js       # namespace, settings, state, helpers
+js/02-storage.js    # save / load / snapshot / import shape
+js/03-stats.js      # streaks, demo seed, aggregations
+js/04-audio.js      # sounds, vibrate, notify
+js/05-theme.js      # themes + accents
+js/06-tasks.js      # task list UI
+js/07-reports.js    # reports + session log
+js/08-timer-ui.js   # ring display
+js/09-timer-core.js # tick, start/stop, phases
+js/10-ui.js         # settings sheet, modals, export
+js/11-boot.js       # resume timer, tour, service worker
 favicon.svg
 manifest.json
 sw.js
