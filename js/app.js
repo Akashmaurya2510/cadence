@@ -8,9 +8,22 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", moss: "#121a16", dusk: "#17151f", oled: "#000000" };
 
-  const APP_VERSION = "2.1.0";
+  const APP_VERSION = "2.2.0";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "2.2.0",
+      date: "August 2026",
+      title: "Cadence 2.2",
+      blurb: "Theme, tasks, and reports polished for mobile — click a task to focus, auto-strike when the target is met.",
+      items: [
+        { tag: "Polish", text: "Theme swatches match each palette; theme icon uses the accent color." },
+        { tag: "Polish", text: "Larger heatmap with weekday labels; cleaner hour chart on phones." },
+        { tag: "New", text: "Tap a task to make it active; Start focus button; auto-strike when target is hit." },
+        { tag: "Polish", text: "Task rows tighter: progress, length, and due chips cleaned up." },
+        { tag: "New", text: "Empty-state hints on sparse charts; peak-hour highlight." },
+      ],
+    },
     {
       version: "2.1.0",
       date: "August 2026",
@@ -448,19 +461,22 @@
       row.className = "task" + (t.id === state.activeTaskId ? " active" : "") + (t.done ? " done" : "");
       row.draggable = true;
       const pct = t.target > 0 ? Math.min(100, Math.round((t.pomodoros / t.target) * 100)) : 0;
-      const dueLabel = t.due === "today" ? "Today" : t.due === "later" ? "Later" : "Due";
+      const dueLabel = t.due === "today" ? "Today" : t.due === "later" ? "Later" : "Inbox";
+      const progressLabel = t.target > 0
+        ? (t.pomodoros + "/" + t.target)
+        : (t.pomodoros ? t.pomodoros + " done" : "Set target");
+      const lenLabel = (t.focusMin || settings.focus) + "m";
       row.innerHTML =
-        '<button class="chk" aria-label="toggle done"></button>' +
+        '<button class="chk" aria-label="Mark done"></button>' +
         '<div class="body">' +
           '<button class="title">' + escapeHtml(t.title) + "</button>" +
           '<div class="meta">' +
-            (t.target > 0
-              ? '<div class="pomo-bar" title="' + t.pomodoros + " / " + t.target + '"><span style="width:' + pct + '%"></span></div>' +
-                '<button type="button" class="today-line pomo-hit">' + t.pomodoros + " / " + t.target + "</button>"
-              : '<button type="button" class="today-line pomo-hit">' + (t.pomodoros ? t.pomodoros + " focus · " : "") + "target</button>") +
-            '<button type="button" class="today-line focus-len" title="Custom focus length">' + (t.focusMin ? t.focusMin + "m" : "25m") + "</button>" +
+            (t.target > 0 ? '<div class="pomo-bar" title="' + progressLabel + '"><span style="width:' + pct + '%"></span></div>' : "") +
+            '<button type="button" class="meta-chip progress pomo-hit">' + progressLabel + "</button>" +
+            '<button type="button" class="meta-chip len focus-len" title="Focus length">' + lenLabel + "</button>" +
             '<button class="due-chip' + (t.due === "today" ? " today" : "") + '" type="button">' + dueLabel + "</button>" +
           "</div>" +
+          (t.archived || t.done ? "" : '<button type="button" class="start-focus">Start focus</button>') +
         "</div>" +
         '<div class="actions">' +
           '<button class="iconish up" aria-label="Move up" title="Move up">↑</button>' +
@@ -472,17 +488,32 @@
           "</button>" +
           '<button class="iconish del" aria-label="Delete">×</button>' +
         "</div>";
-      row.querySelector(".chk").onclick = (e) => { e.stopPropagation(); t.done = !t.done; if (t.done && state.activeTaskId === t.id) state.activeTaskId = null; save(); renderTasks(); };
-      row.querySelector(".title").onclick = () => {
+      function selectTask(start) {
         if (t.archived || t.done) return;
-        state.activeTaskId = state.activeTaskId === t.id ? null : t.id;
-        if (state.mode === "focus" && !state.running) {
+        state.activeTaskId = t.id;
+        if (state.mode !== "focus") {
+          if (!state.running) {
+            state.mode = "focus";
+            state.secondsLeft = durationFor("focus");
+          }
+        } else if (!state.running) {
           state.secondsLeft = durationFor("focus");
-          renderTimer();
         }
+        save(); renderTasks(); renderTimer();
+        showPage("timer");
+        if (start && !state.running) startTimer();
+        else if (!start) toast("Ready · " + t.title);
+      }
+      row.querySelector(".chk").onclick = (e) => {
+        e.stopPropagation();
+        t.done = !t.done;
+        if (t.done && state.activeTaskId === t.id) state.activeTaskId = null;
         save(); renderTasks();
       };
+      row.querySelector(".title").onclick = () => selectTask(false);
       row.querySelector(".title").ondblclick = (e) => { e.preventDefault(); startEdit(row, t); };
+      const startBtn = row.querySelector(".start-focus");
+      if (startBtn) startBtn.onclick = (e) => { e.stopPropagation(); selectTask(true); };
       row.querySelector(".due-chip").onclick = (e) => {
         e.stopPropagation();
         t.due = t.due === "today" ? "later" : t.due === "later" ? null : "today";
@@ -725,11 +756,21 @@
 
     const heat = $("heatGrid");
     heat.innerHTML = "";
+    const dows = $("heatDows");
+    if (dows) {
+      dows.innerHTML = "";
+      ["M", "T", "W", "T", "F", "S", "S"].forEach((d) => {
+        const s = document.createElement("span");
+        s.textContent = d;
+        dows.appendChild(s);
+      });
+    }
     const map = {};
     focusSessions().forEach((s) => {
       const k = dayKey(s.endedAt);
       map[k] = (map[k] || 0) + s.durationSec / 60;
     });
+    // Align grid so each column is a week starting Monday
     const start = weekFrom - 15 * 7 * 86400000;
     for (let t = start; t < todayFrom + 86400000; t += 86400000) {
       const cell = document.createElement("div");
@@ -738,7 +779,7 @@
       if (m >= 100) cls = "h4"; else if (m >= 50) cls = "h3"; else if (m >= 25) cls = "h2"; else if (m > 0) cls = "h1";
       cell.className = "heat-cell " + cls;
       const dk = dayKey(t);
-      cell.title = dk + ": " + m + "m — click to open log";
+      cell.title = dk + ": " + m + "m — open log";
       cell.setAttribute("role", "button");
       cell.tabIndex = 0;
       cell.onclick = () => {
@@ -751,6 +792,9 @@
       };
       heat.appendChild(cell);
     }
+    if (!Object.keys(map).length) {
+      heat.innerHTML = '<div class="chart-empty" style="grid-column:1/-1">Complete focus sessions to fill the heatmap.</div>';
+    }
 
     const hours = Array.from({ length: 17 }, (_, i) => ({ hour: i + 6, m: 0 }));
     focusSessions().forEach((s) => {
@@ -762,13 +806,20 @@
     const hourMax = Math.max(1, ...hours.map((h) => h.m));
     const hourBars = $("hourBars");
     hourBars.innerHTML = "";
-    hours.forEach((h) => {
-      const col = document.createElement("div");
-      col.className = "bar-col";
-      const ht = Math.max(4, Math.round((h.m / hourMax) * 110));
-      col.innerHTML = '<div class="bar rest" style="height:' + ht + 'px"></div><span>' + (h.hour % 12 || 12) + (h.hour >= 12 ? "p" : "a") + "</span>";
-      hourBars.appendChild(col);
-    });
+    const anyHour = hours.some((h) => h.m > 0);
+    if (!anyHour) {
+      hourBars.innerHTML = '<div class="chart-empty">No hourly focus data this week yet.</div>';
+    } else {
+      hours.forEach((h) => {
+        const col = document.createElement("div");
+        const isPeak = h.m > 0 && h.m === hourMax;
+        col.className = "bar-col" + (h.m === 0 ? " hour-quiet" : "") + (isPeak ? " hour-peak" : "");
+        const ht = h.m > 0 ? Math.max(6, Math.round((h.m / hourMax) * 100)) : 3;
+        const label = (h.hour % 12 || 12) + (h.hour >= 12 ? "p" : "a");
+        col.innerHTML = '<div class="bar rest" style="height:' + ht + 'px" title="' + Math.round(h.m) + 'm"></div><span>' + label + "</span>";
+        hourBars.appendChild(col);
+      });
+    }
 
     const byTask = {};
     focusSessions().forEach((s) => {
@@ -911,7 +962,14 @@
     state.sessions.push(entry);
     if (completed && mode === "focus" && state.activeTaskId) {
       const t = state.tasks.find((x) => x.id === state.activeTaskId);
-      if (t) t.pomodoros += 1;
+      if (t) {
+        t.pomodoros += 1;
+        if (t.target > 0 && t.pomodoros >= t.target && !t.done) {
+          t.done = true;
+          if (state.activeTaskId === t.id) state.activeTaskId = null;
+          setTimeout(() => toast("Target hit · " + t.title + " marked done"), 400);
+        }
+      }
     }
     return entry;
   }

@@ -4,6 +4,16 @@ Cadence shows a “what’s new” popup to returning visitors whenever `APP_VER
 
 Edit **both** `APP_VERSION` and the `CHANGELOG` array in `js/app.js` — this markdown file is only a human-readable copy.
 
+## 2.2.0 — August 2026
+
+Theme, tasks, and reports polished for mobile — click a task to focus, auto-strike when the target is hit.
+
+- **Polish** Theme swatches match each palette; theme icon uses the accent color.
+- **Polish** Larger heatmap with weekday labels; cleaner hour chart on phones.
+- **New** Tap a task to make it active; **Start focus** button; auto-strike when target is hit.
+- **Polish** Task rows tighter: progress, length, and due chips cleaned up.
+- **New** Empty-state hints on sparse charts; peak-hour highlight.
+
 ## 2.1.0 — August 2026
 
 Cadence 2.1. Live title, active task on the ring, break ideas, CSV export, and calmer polish — still fully local.
@@ -22,11 +32,3 @@ Cadence 2.0. A quieter timer, richer reports, and a home-screen app — still fu
 
 - **New** Install Cadence as a standalone app, with offline support.
 - **New** Zen mode hides chrome while you focus. Tap the timer to bring it back.
-- **New** Session notes, vibration, and three completion sounds.
-- **New** Edit, reorder, pause, and set pomodoro targets on tasks.
-- **New** Longest streak, completion rate, time-by-task, and weekly/monthly goals.
-- **New** Search the log, export a report image, and copy a JSON backup.
-- **Fix** Settings drawer and tab bar hold up on mobile zoom and gesture bars.
-- **Fix** Clear-all-data now asks first. Mode switches warn if a session is in progress.
-- **Fix** Import validates session/task shape and rolls back on failure.
-- **Fix** Task list is no longer silently capped at six items. Log paginates instead of stopping at 80.

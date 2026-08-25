@@ -9,6 +9,7 @@ Vanilla HTML, CSS, and JavaScript. No build step, no accounts, nothing uploaded.
 - Focus / short break / long break ring timer, with an “up next” preview and estimated end time
 - Live tab title while the timer runs
 - Active task shown on the ring; custom focus length per task (15 / 25 / 45 / 50 / 90)
+- Tap a task to select it; **Start focus** runs the timer; auto-strike when target is met
 - Zen mode while a focus session is running — tap the timer to bring chrome back
 - Five themes + **Auto** (follows system light/dark): Graphite, Linen, Moss, Dusk, **OLED**
 - Break suggestions on short/long breaks
@@ -18,6 +19,7 @@ Vanilla HTML, CSS, and JavaScript. No build step, no accounts, nothing uploaded.
 - Optional session notes after a completed focus block
 - Reports: weekly bars, heatmap, hourly focus, time-by-task, longest streak, completion rate
 - Click a heatmap cell or week bar to open that day in the Log
+- Heatmap weekday labels; cleaner mobile hour chart
 - Session log with search, task filter, Today / This week chips, and pagination
 - Sound (chime / bell / wood), volume, optional tick, vibration, notifications
 - Export JSON / CSV, copy JSON to clipboard, import with validation, report PNG
