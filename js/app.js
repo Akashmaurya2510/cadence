@@ -542,8 +542,52 @@
     if (state.page === "log") renderLog();
   }
 
-  if (!load()) seed();
+  const TOUR_KEY = "cadence-v1-tour-done";
+  const tourSteps = [
+    {
+      title: "A calmer way to focus",
+      text: "Cadence runs 25-minute focus sessions with short and long breaks in between. Tap the center button to start — the ring fills in as time passes.",
+    },
+    {
+      title: "Make it yours",
+      text: "Switch Focus, Short Break, or Long Break anytime with the pill at the top, or tap the palette icon for five color themes, including a true-black OLED option.",
+    },
+    {
+      title: "Track what you're working on",
+      text: "Add tasks below the timer and mark one active. Completed focus sessions get logged against it automatically.",
+    },
+    {
+      title: "See your rhythm",
+      text: "Reports and Log, in the bottom nav, show your streak, weekly trends, and full session history. Press ? anytime for keyboard shortcuts.",
+    },
+  ];
+  function initTour() {
+    if (localStorage.getItem(TOUR_KEY)) return;
+    let i = 0;
+    const modal = $("onboardModal");
+    function renderStep() {
+      const s = tourSteps[i];
+      $("tourKicker").textContent = "Step " + (i + 1) + " of " + tourSteps.length;
+      $("tourTitle").textContent = s.title;
+      $("tourText").textContent = s.text;
+      $("tourNext").textContent = i === tourSteps.length - 1 ? "Start" : "Next";
+    }
+    function finish() {
+      localStorage.setItem(TOUR_KEY, "1");
+      modal.classList.remove("open");
+    }
+    $("tourNext").onclick = () => {
+      if (i === tourSteps.length - 1) { finish(); return; }
+      i++; renderStep();
+    };
+    $("tourSkip").onclick = finish;
+    renderStep();
+    modal.classList.add("open");
+  }
+
+  if (!load()) { /* fresh visitor: start blank, no auto demo data */ }
   const hash = location.hash.replace("#", "");
   renderAll();
   if (hash === "reports" || hash === "log") showPage(hash);
+  initTour();
 })();
