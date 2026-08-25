@@ -28,16 +28,33 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M7 11h.01M11 11h2M16.5 11h.01M8 15h8"/></svg>
       </button>
       <div class="header-anchor">
-        <button class="icon-btn" id="themeBtn" aria-label="Change theme" title="Theme">
+        <button class="icon-btn" id="themeBtn" aria-label="Theme and accent" title="Theme">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18 4 4 0 000-8 2.5 2.5 0 010-5 4 4 0 000-5z"/></svg>
         </button>
-        <div class="popover" id="themePopover">
-          <div class="swatch" data-t="graphite" title="Graphite"></div>
-          <div class="swatch" data-t="linen" title="Linen"></div>
-          <div class="swatch" data-t="moss" title="Moss"></div>
-          <div class="swatch" data-t="dusk" title="Dusk"></div>
-          <div class="swatch" data-t="oled" title="OLED"></div>
-          <button type="button" class="theme-auto-chip" id="themeAutoBtn" title="Follow system light/dark">Auto</button>
+        <div class="theme-panel" id="themePopover" role="dialog" aria-label="Theme and accent">
+          <div class="theme-panel-head">
+            <span>Look</span>
+            <button type="button" class="theme-panel-close" id="themePanelClose" aria-label="Close">×</button>
+          </div>
+          <div class="theme-section-label">Theme</div>
+          <div class="theme-grid" id="themeGrid">
+            <button type="button" class="theme-card" data-t="graphite"><span class="tc-preview" data-t="graphite"></span><span class="tc-name">Graphite</span></button>
+            <button type="button" class="theme-card" data-t="linen"><span class="tc-preview" data-t="linen"></span><span class="tc-name">Linen</span></button>
+            <button type="button" class="theme-card" data-t="moss"><span class="tc-preview" data-t="moss"></span><span class="tc-name">Moss</span></button>
+            <button type="button" class="theme-card" data-t="dusk"><span class="tc-preview" data-t="dusk"></span><span class="tc-name">Dusk</span></button>
+            <button type="button" class="theme-card" data-t="oled"><span class="tc-preview" data-t="oled"></span><span class="tc-name">OLED</span></button>
+            <button type="button" class="theme-card theme-card-auto" id="themeAutoBtn"><span class="tc-preview auto"></span><span class="tc-name">System</span></button>
+          </div>
+          <div class="theme-section-label">Accent</div>
+          <div class="accent-row" id="accentRow">
+            <button type="button" class="accent-dot on" data-accent="default" title="Theme default" style="background:var(--work)"></button>
+            <button type="button" class="accent-dot" data-accent="amber" title="Amber" style="background:#e7b54a"></button>
+            <button type="button" class="accent-dot" data-accent="coral" title="Coral" style="background:#ff6b4a"></button>
+            <button type="button" class="accent-dot" data-accent="mint" title="Mint" style="background:#3dcfb6"></button>
+            <button type="button" class="accent-dot" data-accent="violet" title="Violet" style="background:#8c7ae6"></button>
+            <button type="button" class="accent-dot" data-accent="rose" title="Rose" style="background:#ff5470"></button>
+            <button type="button" class="accent-dot" data-accent="sky" title="Sky" style="background:#4aa3ff"></button>
+          </div>
         </div>
       </div>
       <button class="icon-btn" id="settingsBtn" aria-label="Open settings" title="Settings">
@@ -54,6 +71,7 @@
         <button data-mode="long">Long Break</button>
       </div>
       <div class="today-line" id="todayLine">0 sessions today</div>
+      <div class="mini-stats" id="miniStats"></div>
     </div>
     <div class="ring-stage" id="ringStage" role="button" tabindex="0" aria-label="Timer. Tap to show or hide chrome while focusing.">
       <svg class="ring" viewBox="0 0 280 280">
@@ -232,6 +250,8 @@
     </div></div>
   <div class="toggle-row"><span>Tick while focusing</span><div class="switch" id="switchTick" role="switch" aria-checked="false"></div></div>
   <div class="toggle-row"><span>Follow system theme</span><div class="switch" id="switchThemeAuto" role="switch" aria-checked="false"></div></div>
+  <div class="toggle-row"><span>Compact layout</span><div class="switch" id="switchCompact" role="switch" aria-checked="false"></div></div>
+  <div class="toggle-row"><span>Confirm before skip</span><div class="switch on" id="switchConfirmSkip" role="switch" aria-checked="true"></div></div>
   <div class="toggle-row"><span>Vibrate on completion</span><div class="switch on" id="switchVibrate" role="switch" aria-checked="true"></div></div>
   <div class="toggle-row"><span>Desktop notifications</span><div class="switch" id="switchNotify" role="switch" aria-checked="false"></div></div>
   <p class="sub section-label">Data</p>

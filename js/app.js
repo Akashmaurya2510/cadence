@@ -8,9 +8,21 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", moss: "#121a16", dusk: "#17151f", oled: "#000000" };
 
-  const APP_VERSION = "2.2.0";
+  const APP_VERSION = "2.3.0";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "2.3.0",
+      date: "August 2026",
+      title: "Cadence 2.3",
+      blurb: "Theme + accent picker, mini stats, compact mode, and calmer skip confirms.",
+      items: [
+        { tag: "New", text: "Theme panel with named cards and independent accent colors." },
+        { tag: "New", text: "Mini stats under the timer (streak · today goal progress)." },
+        { tag: "New", text: "Compact layout toggle and confirm-before-skip." },
+        { tag: "Polish", text: "Accent tints the ring, chips, and theme icon across all themes." },
+      ],
+    },
     {
       version: "2.2.0",
       date: "August 2026",
@@ -60,6 +72,16 @@
     dailyGoal: 8, weeklyGoal: 40, monthlyGoal: 160,
     autoStart: false, sound: true, notify: false, tickSound: false,
     vibrate: true, soundChoice: "chime", volume: 2, themeAuto: false,
+    accent: "default", compact: false, confirmSkip: true,
+  };
+  const ACCENTS = {
+    default: null,
+    amber:  { work: "#e7b54a", soft: "rgba(231,181,74,0.16)", ink: "#171308" },
+    coral:  { work: "#ff6b4a", soft: "rgba(255,107,74,0.16)", ink: "#1a0a06" },
+    mint:   { work: "#3dcfb6", soft: "rgba(61,207,182,0.14)", ink: "#03140f" },
+    violet: { work: "#8c7ae6", soft: "rgba(140,122,230,0.16)", ink: "#0f0c1e" },
+    rose:   { work: "#ff5470", soft: "rgba(255,84,112,0.16)", ink: "#170307" },
+    sky:    { work: "#4aa3ff", soft: "rgba(74,163,255,0.16)", ink: "#061018" },
   };
   const VOLUME_LABEL = { 1: "Quiet", 2: "Normal", 3: "Loud" };
   const BREAK_IDEAS = [
@@ -191,6 +213,9 @@
       state.schemaVersion = d.schemaVersion || 1;
       if (settings.volume == null) settings.volume = 2;
       if (settings.themeAuto == null) settings.themeAuto = false;
+      if (!settings.accent) settings.accent = "default";
+      if (settings.compact == null) settings.compact = false;
+      if (settings.confirmSkip == null) settings.confirmSkip = true;
       return true;
     } catch { return false; }
   }
@@ -387,6 +412,34 @@
     try { new Notification(title, { body, silent: true }); } catch (e) { /* ignore */ }
   }
 
+  function applyAccent() {
+    const root = document.documentElement;
+    const a = ACCENTS[settings.accent] || null;
+    if (!a) {
+      root.style.removeProperty("--work");
+      root.style.removeProperty("--work-soft");
+      root.style.removeProperty("--work-ink");
+    } else {
+      root.style.setProperty("--work", a.work);
+      root.style.setProperty("--work-soft", a.soft);
+      root.style.setProperty("--work-ink", a.ink);
+    }
+    // Refresh mode accent vars via body data-mode (CSS already maps --accent)
+    document.body.setAttribute("data-mode", state.mode || "focus");
+  }
+  function syncThemeUI() {
+    document.querySelectorAll(".theme-card").forEach((c) => {
+      if (c.id === "themeAutoBtn") c.classList.toggle("on", !!settings.themeAuto);
+      else c.classList.toggle("on", !settings.themeAuto && c.dataset.t === state.theme);
+    });
+    document.querySelectorAll(".accent-dot").forEach((d) => {
+      d.classList.toggle("on", d.dataset.accent === (settings.accent || "default"));
+    });
+    if ($("switchThemeAuto")) {
+      $("switchThemeAuto").classList.toggle("on", !!settings.themeAuto);
+      $("switchThemeAuto").setAttribute("aria-checked", settings.themeAuto ? "true" : "false");
+    }
+  }
   function setTheme(theme, fromAuto) {
     if (!fromAuto) settings.themeAuto = false;
     state.theme = theme;
@@ -394,27 +447,27 @@
     const color = THEME_COLORS[theme] || "#15171b";
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content", color);
-    document.querySelectorAll(".swatch").forEach((s) => s.classList.toggle("active", s.dataset.t === theme && !settings.themeAuto));
-    const autoBtn = $("themeAutoBtn");
-    if (autoBtn) autoBtn.classList.toggle("on", !!settings.themeAuto);
+    applyAccent();
+    syncThemeUI();
   }
   function applyTheme() {
     if (settings.themeAuto) {
       const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       const auto = dark ? "graphite" : "linen";
-      if (state.theme !== auto) {
-        state.theme = auto;
-        document.documentElement.setAttribute("data-theme", auto);
-        const color = THEME_COLORS[auto] || "#15171b";
-        const meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute("content", color);
-      }
-      document.querySelectorAll(".swatch").forEach((s) => s.classList.remove("active"));
-      const autoBtn = $("themeAutoBtn");
-      if (autoBtn) autoBtn.classList.add("on");
+      state.theme = auto;
+      document.documentElement.setAttribute("data-theme", auto);
+      const color = THEME_COLORS[auto] || "#15171b";
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute("content", color);
     } else {
-      setTheme(state.theme, true);
+      document.documentElement.setAttribute("data-theme", state.theme);
+      const color = THEME_COLORS[state.theme] || "#15171b";
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute("content", color);
     }
+    applyAccent();
+    syncThemeUI();
+    document.body.classList.toggle("compact", !!settings.compact);
   }
 
   function renderPips() {
@@ -622,6 +675,13 @@
     $("upNext").textContent = "Up next: " + MODE_LABEL[nxt];
     const today = countRange(startOfDay(), startOfDay() + 86400000);
     $("todayLine").textContent = today + " session" + (today === 1 ? "" : "s") + " today · goal " + settings.dailyGoal;
+    const ms = $("miniStats");
+    if (ms) {
+      const st = streak();
+      ms.innerHTML =
+        '<span class="mini-stat"><strong>' + st + "d</strong> streak</span>" +
+        '<span class="mini-stat"><strong>' + today + "/" + settings.dailyGoal + "</strong> today</span>";
+    }
     document.body.setAttribute("data-mode", state.mode);
     applyTheme();
     ringProgress.style.strokeDashoffset = C * (1 - state.secondsLeft / total);
@@ -1095,10 +1155,20 @@
 
   $("playBtn").onclick = () => state.running ? stopTimer() : startTimer();
   $("resetBtn").onclick = () => { stopTimer(); state.secondsLeft = durationFor(state.mode); renderTimer(); save(); };
-  $("skipBtn").onclick = () => {
-    const elapsed = elapsedNow();
-    logSession(state.mode, elapsed, false);
-    advance(false);
+  $("skipBtn").onclick = async () => {
+    const go = () => {
+      const elapsed = elapsedNow();
+      logSession(state.mode, elapsed, false);
+      advance(false);
+    };
+    if (settings.confirmSkip && meaningfullyElapsed()) {
+      const ok = await askConfirm({
+        title: "Skip this phase?",
+        text: "You have progress on this block. Skip and move on?",
+        ok: "Skip",
+      });
+      if (ok) go();
+    } else go();
   };
   document.querySelectorAll(".mode-switch button").forEach((b) => {
     b.onclick = () => switchMode(b.dataset.mode);
@@ -1135,21 +1205,39 @@
 
   const themeBtn = $("themeBtn"), themePopover = $("themePopover");
   themeBtn.onclick = (e) => { e.stopPropagation(); themePopover.classList.toggle("open"); };
-  document.querySelectorAll(".swatch").forEach((s) => {
-    s.onclick = () => { settings.themeAuto = false; setTheme(s.dataset.t); themePopover.classList.remove("open"); save(); };
+  document.querySelectorAll(".theme-card[data-t]").forEach((c) => {
+    c.onclick = (e) => {
+      e.stopPropagation();
+      settings.themeAuto = false;
+      setTheme(c.dataset.t);
+      save();
+    };
   });
   if ($("themeAutoBtn")) {
     $("themeAutoBtn").onclick = (e) => {
       e.stopPropagation();
-      settings.themeAuto = !settings.themeAuto;
+      settings.themeAuto = true;
       applyTheme();
-      themePopover.classList.remove("open");
       save();
-      toast(settings.themeAuto ? "Following system theme" : "Theme locked to " + state.theme);
+      toast("Following system theme");
     };
   }
+  document.querySelectorAll(".accent-dot").forEach((d) => {
+    d.onclick = (e) => {
+      e.stopPropagation();
+      settings.accent = d.dataset.accent || "default";
+      applyAccent();
+      syncThemeUI();
+      save();
+    };
+  });
+  if ($("themePanelClose")) {
+    $("themePanelClose").onclick = (e) => { e.stopPropagation(); themePopover.classList.remove("open"); };
+  }
   document.addEventListener("click", (e) => {
-    if (!themePopover.contains(e.target) && e.target !== themeBtn) themePopover.classList.remove("open");
+    if (themePopover && !themePopover.contains(e.target) && e.target !== themeBtn && !themeBtn.contains(e.target)) {
+      themePopover.classList.remove("open");
+    }
   });
 
   const drawer = $("drawer"), backdrop = $("backdrop");
@@ -1229,6 +1317,23 @@
       save();
     };
   }
+  function bindSimpleSwitch(id, key, onChange) {
+    const el = $(id);
+    if (!el) return;
+    el.classList.toggle("on", !!settings[key]);
+    el.setAttribute("aria-checked", settings[key] ? "true" : "false");
+    el.onclick = () => {
+      settings[key] = !settings[key];
+      el.classList.toggle("on", settings[key]);
+      el.setAttribute("aria-checked", settings[key] ? "true" : "false");
+      if (onChange) onChange();
+      save();
+    };
+  }
+  bindSimpleSwitch("switchCompact", "compact", () => {
+    document.body.classList.toggle("compact", !!settings.compact);
+  });
+  bindSimpleSwitch("switchConfirmSkip", "confirmSkip");
 
   function renderSoundPicks() {
     document.querySelectorAll("[data-sound]").forEach((b) => {
@@ -1425,6 +1530,15 @@
       $("switchThemeAuto").classList.toggle("on", settings.themeAuto);
       $("switchThemeAuto").setAttribute("aria-checked", settings.themeAuto ? "true" : "false");
     }
+    if ($("switchCompact")) {
+      $("switchCompact").classList.toggle("on", !!settings.compact);
+      $("switchCompact").setAttribute("aria-checked", settings.compact ? "true" : "false");
+    }
+    if ($("switchConfirmSkip")) {
+      $("switchConfirmSkip").classList.toggle("on", !!settings.confirmSkip);
+      $("switchConfirmSkip").setAttribute("aria-checked", settings.confirmSkip ? "true" : "false");
+    }
+    document.body.classList.toggle("compact", !!settings.compact);
     renderSoundPicks();
     renderTimer(); renderTasks();
     if (state.page === "reports") renderReports();
