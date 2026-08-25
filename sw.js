@@ -1,19 +1,9 @@
-const CACHE = "cadence-v2.4.2";
+const CACHE = "cadence-v2.4.3";
 const ASSETS = [
   "./",
   "./index.html",
   "./css/styles.css",
-  "./js/01-core.js",
-  "./js/02-storage.js",
-  "./js/03-stats.js",
-  "./js/04-audio.js",
-  "./js/05-theme.js",
-  "./js/06-tasks.js",
-  "./js/07-reports.js",
-  "./js/08-timer-ui.js",
-  "./js/09-timer-core.js",
-  "./js/10-ui.js",
-  "./js/11-boot.js",
+  "./js/app.js",
   "./favicon.svg",
   "./manifest.json",
   "./icons/icon-192.png",
