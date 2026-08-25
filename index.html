@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="graphite">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadence</title>
+  <meta name="description" content="A calm pomodoro timer with reports, tasks, and OLED-ready themes.">
+  <meta name="theme-color" content="#15171b">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-mode="focus">
+<div class="wrap">
+  <header class="top">
+    <div class="wordmark" id="wordmark"><span class="dot"></span>Cadence</div>
+    <nav class="desk-nav">
+      <a href="#" data-nav="timer" class="active">Timer</a>
+      <a href="#reports" data-nav="reports">Reports</a>
+      <a href="#log" data-nav="log">Log</a>
+    </nav>
+    <div class="icon-row">
+      <button class="icon-btn" id="helpBtn" aria-label="Shortcuts" title="Shortcuts">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M7 11h.01M11 11h2M16.5 11h.01M8 15h8"/></svg>
+      </button>
+      <div class="header-anchor">
+        <button class="icon-btn" id="themeBtn" aria-label="Change theme" title="Theme">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18 4 4 0 000-8 2.5 2.5 0 010-5 4 4 0 000-5z"/></svg>
+        </button>
+        <div class="popover" id="themePopover">
+          <div class="swatch" data-t="graphite" title="Graphite"></div>
+          <div class="swatch" data-t="linen" title="Linen"></div>
+          <div class="swatch" data-t="moss" title="Moss"></div>
+          <div class="swatch" data-t="dusk" title="Dusk"></div>
+          <div class="swatch" data-t="oled" title="OLED"></div>
+        </div>
+      </div>
+      <button class="icon-btn" id="settingsBtn" aria-label="Open settings" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1 1.56V21a2 2 0 11-4 0v-.09a1.7 1.7 0 00-1-1.56 1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.7 1.7 0 00.34-1.87 1.7 1.7 0 00-1.56-1H3a2 2 0 110-4h.09a1.7 1.7 0 001.56-1 1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06a1.7 1.7 0 001.87.34H9a1.7 1.7 0 001-1.56V3a2 2 0 114 0v.09a1.7 1.7 0 001 1.56 1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l-.06.06a1.7 1.7 0 00-.34 1.87V9a1.7 1.7 0 001.56 1H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.56 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="page active" data-page="timer">
+    <div class="mode-row">
+      <div class="mode-switch">
+        <button data-mode="focus" class="on">Focus</button>
+        <button data-mode="short">Short Break</button>
+        <button data-mode="long">Long Break</button>
+      </div>
+      <div class="today-line" id="todayLine">0 sessions today</div>
+    </div>
+    <div class="ring-stage" id="ringStage">
+      <svg class="ring" viewBox="0 0 280 280">
+        <g id="ticks"></g>
+        <circle class="ring-track" cx="140" cy="140" r="120"></circle>
+        <circle class="ring-progress" id="ringProgress" cx="140" cy="140" r="120"></circle>
+      </svg>
+      <div class="ring-center">
+        <div class="time" id="timeDisplay">25:00</div>
+        <div class="state-label" id="stateLabel">Ready</div>
+      </div>
+    </div>
+    <div class="pips" id="pips"></div>
+    <div class="controls">
+      <button class="btn btn-secondary" id="resetBtn" aria-label="Reset session">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      </button>
+      <button class="btn btn-primary" id="playBtn" aria-label="Start">
+        <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <button class="btn btn-secondary" id="skipBtn" aria-label="Skip to next phase">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4l11 8-11 8V4z"/><path d="M19 5v14"/></svg>
+      </button>
+    </div>
+    <div class="tasks">
+      <h2>This session <span class="today-line" id="openCount"></span></h2>
+      <form class="task-form" id="taskForm">
+        <input id="taskInput" placeholder="Add a task" aria-label="New task">
+        <button type="submit" aria-label="Add">+</button>
+      </form>
+      <div id="taskList"></div>
+    </div>
+    <footer class="hint">Space to start · pause · keep the rhythm</footer>
+  </section>
+
+  <section class="page wide" data-page="reports">
+    <div class="page-head">
+      <div class="kicker">Reports</div>
+      <h1>Your rhythm</h1>
+      <p id="reportLead">Complete a focus session and this page fills in.</p>
+      <div class="banner" id="demoBanner">Sample history is loaded so you can explore the charts. Clear or replace it in Settings.</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="l">Today</div><div class="v" id="statToday">0m</div><div class="h" id="statTodayH">0 / 8 goal</div></div>
+      <div class="stat"><div class="l">This week</div><div class="v" id="statWeek">0m</div><div class="h" id="statWeekH">0 sessions</div></div>
+      <div class="stat"><div class="l">Streak</div><div class="v" id="statStreak">0d</div><div class="h">consecutive days</div></div>
+      <div class="stat"><div class="l">Month</div><div class="v" id="statMonth">0m</div><div class="h">completed focus</div></div>
+    </div>
+    <div class="card"><h2>Last 7 days</h2><div class="bars" id="weekBars"></div></div>
+    <div class="card"><h2>Activity</h2><div class="heat"><div class="heat-grid" id="heatGrid"></div></div></div>
+    <div class="card"><h2>Focus by hour this week</h2><div class="bars" id="hourBars"></div></div>
+  </section>
+
+  <section class="page wide" data-page="log">
+    <div class="page-head">
+      <div class="kicker">Log</div>
+      <h1>Session history</h1>
+      <p>Every completed and skipped phase, newest first.</p>
+    </div>
+    <div class="filters">
+      <button class="chip on" data-filter="all">All</button>
+      <button class="chip" data-filter="focus">Focus</button>
+      <button class="chip" data-filter="short">Short</button>
+      <button class="chip" data-filter="long">Long</button>
+    </div>
+    <div id="logList"></div>
+  </section>
+</div>
+
+<nav class="tabbar">
+  <a href="#" data-nav="timer" class="active">Timer</a>
+  <a href="#reports" data-nav="reports">Reports</a>
+  <a href="#log" data-nav="log">Log</a>
+</nav>
+
+<div class="backdrop" id="backdrop"></div>
+<div class="drawer" id="drawer">
+  <h2>Settings</h2>
+  <p class="sub">Durations, rhythm, and how Cadence talks back.</p>
+  <div class="field"><label>Focus length <span class="val" id="vFocus">25 min</span></label><input type="range" id="rFocus" min="5" max="60" step="5" value="25"></div>
+  <div class="field"><label>Short break <span class="val" id="vShort">5 min</span></label><input type="range" id="rShort" min="1" max="20" step="1" value="5"></div>
+  <div class="field"><label>Long break <span class="val" id="vLong">15 min</span></label><input type="range" id="rLong" min="5" max="40" step="5" value="15"></div>
+  <div class="field"><label>Long break after <span class="val" id="vInterval">4 sessions</span></label><input type="range" id="rInterval" min="2" max="8" step="1" value="4"></div>
+  <div class="field"><label>Daily goal <span class="val" id="vGoal">8 sessions</span></label><input type="range" id="rGoal" min="1" max="16" step="1" value="8"></div>
+  <div class="toggle-row"><span>Auto-start next phase</span><div class="switch" id="switchAuto"></div></div>
+  <div class="toggle-row"><span>Sound on completion</span><div class="switch on" id="switchSound"></div></div>
+  <div class="toggle-row"><span>Tick while focusing</span><div class="switch" id="switchTick"></div></div>
+  <div class="toggle-row"><span>Desktop notifications</span><div class="switch" id="switchNotify"></div></div>
+  <p class="sub" style="margin-top:18px">Data</p>
+  <button class="ghost-btn" id="exportBtn" type="button">Export report JSON</button>
+  <button class="ghost-btn" id="importBtn" type="button">Import JSON</button>
+  <input id="importFile" type="file" accept="application/json" hidden>
+  <button class="ghost-btn" id="demoBtn" type="button">Load sample history</button>
+  <button class="ghost-btn" id="clearBtn" type="button">Clear all data</button>
+  <button class="drawer-close" id="closeDrawer">Done</button>
+</div>
+
+<div class="modal" id="helpModal">
+  <div class="box">
+    <h3>Shortcuts</h3>
+    <p>Keep both hands on the rhythm.</p>
+    <div class="krow"><kbd>Space</kbd><span>Start or pause</span></div>
+    <div class="krow"><kbd>R</kbd><span>Reset current phase</span></div>
+    <div class="krow"><kbd>N or S</kbd><span>Skip to next phase</span></div>
+    <div class="krow"><kbd>1 / 2 / 3</kbd><span>Focus, short, long</span></div>
+    <div class="krow"><kbd>,</kbd><span>Open settings</span></div>
+    <div class="krow"><kbd>?</kbd><span>This list</span></div>
+    <button class="drawer-close" id="closeHelp">Close</button>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
