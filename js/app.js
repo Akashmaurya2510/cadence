@@ -8,8 +8,23 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", moss: "#121a16", dusk: "#17151f", oled: "#000000" };
 
-  const APP_VERSION = "2.0.0";
+  const APP_VERSION = "2.1.0";
+  const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "2.1.0",
+      date: "August 2026",
+      title: "Cadence 2.1",
+      blurb: "Live title, active task on the ring, break ideas, CSV export, and calmer polish — still fully local.",
+      items: [
+        { tag: "New", text: "Live tab title with mode and estimated end time." },
+        { tag: "New", text: "Active task shown on the ring; custom focus length per task." },
+        { tag: "New", text: "Break suggestions, daily review prompt, and sound volume." },
+        { tag: "New", text: "Heatmap and week bars open the matching log filter." },
+        { tag: "New", text: "CSV export, system theme auto, Today/This-week log chips." },
+        { tag: "Polish", text: "Stronger background resync, aria-live timer, focus-visible, system fonts offline." },
+      ],
+    },
     {
       version: "2.0.0",
       date: "August 2026",
@@ -31,8 +46,19 @@
     focus: 25, short: 5, long: 15, interval: 4,
     dailyGoal: 8, weeklyGoal: 40, monthlyGoal: 160,
     autoStart: false, sound: true, notify: false, tickSound: false,
-    vibrate: true, soundChoice: "chime",
+    vibrate: true, soundChoice: "chime", volume: 2, themeAuto: false,
   };
+  const VOLUME_LABEL = { 1: "Quiet", 2: "Normal", 3: "Loud" };
+  const BREAK_IDEAS = [
+    "Stand up and stretch your shoulders",
+    "Drink a glass of water",
+    "Look 20 feet away for 20 seconds",
+    "Take three slow breaths",
+    "Walk to a window",
+    "Roll your neck gently",
+    "Shake out your hands",
+    "Step outside if you can",
+  ];
   const state = {
     theme: "graphite",
     mode: "focus",
@@ -56,6 +82,9 @@
     pendingAutoStart: false,
     pendingNoteId: null,
     lastTickSecond: null,
+    logDayFilter: null,
+    lastReviewDay: null,
+    schemaVersion: SCHEMA_VERSION,
   };
 
   const $ = (id) => document.getElementById(id);
@@ -79,7 +108,12 @@
     return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
   }
   function durationFor(mode) {
-    return (mode === "focus" ? settings.focus : mode === "short" ? settings.short : settings.long) * 60;
+    if (mode === "focus") {
+      const t = state.activeTaskId && state.tasks.find((x) => x.id === state.activeTaskId);
+      if (t && t.focusMin >= 5) return t.focusMin * 60;
+      return settings.focus * 60;
+    }
+    return (mode === "short" ? settings.short : settings.long) * 60;
   }
   function pad(n) { return String(n).padStart(2, "0"); }
   function fmtMs(sec) {
@@ -111,9 +145,11 @@
 
   function snapshot() {
     return {
+      schemaVersion: SCHEMA_VERSION,
       settings, theme: state.theme, mode: state.mode, secondsLeft: state.secondsLeft,
       focusCount: state.focusCount, tasks: state.tasks, activeTaskId: state.activeTaskId,
       sessions: state.sessions, demo: state.demo, lastExportAt: state.lastExportAt,
+      lastReviewDay: state.lastReviewDay,
     };
   }
   function save() {
@@ -138,16 +174,22 @@
       state.sessions = Array.isArray(d.sessions) ? d.sessions : [];
       state.demo = !!d.demo;
       state.lastExportAt = d.lastExportAt || 0;
+      state.lastReviewDay = d.lastReviewDay || null;
+      state.schemaVersion = d.schemaVersion || 1;
+      if (settings.volume == null) settings.volume = 2;
+      if (settings.themeAuto == null) settings.themeAuto = false;
       return true;
     } catch { return false; }
   }
   function normalizeTask(t) {
+    const focusMin = Number(t.focusMin) || 0;
     return {
       id: t.id || uid(),
       title: String(t.title || "Untitled"),
       done: !!t.done,
       pomodoros: Number(t.pomodoros) || 0,
       target: Number(t.target) || 0,
+      focusMin: focusMin >= 5 && focusMin <= 90 ? focusMin : 0,
       due: t.due === "today" || t.due === "later" ? t.due : null,
       archived: !!t.archived,
     };
@@ -277,11 +319,16 @@
     if (audioCtx.state === "suspended") audioCtx.resume();
     return audioCtx;
   }
+  function volScale() {
+    const v = settings.volume || 2;
+    return v === 1 ? 0.45 : v === 3 ? 1.35 : 1;
+  }
   function tone(ac, freq, start, dur, type, gain) {
     const o = ac.createOscillator(), g = ac.createGain();
     o.type = type || "sine"; o.frequency.value = freq;
+    const scaled = gain * volScale();
     g.gain.setValueAtTime(0, start);
-    g.gain.linearRampToValueAtTime(gain, start + 0.02);
+    g.gain.linearRampToValueAtTime(scaled, start + 0.02);
     g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
     o.connect(g); g.connect(ac.destination);
     o.start(start); o.stop(start + dur + 0.02);
@@ -312,9 +359,10 @@
   }
   function playTick() {
     if (!settings.tickSound || state.mode !== "focus") return;
+    if (document.visibilityState === "hidden") return;
     try {
       const ac = ctx();
-      tone(ac, 920, ac.currentTime, 0.03, "square", 0.03);
+      tone(ac, 920, ac.currentTime, 0.03, "square", 0.025);
     } catch (e) { /* ignore */ }
   }
   function vibrate() {
@@ -326,13 +374,34 @@
     try { new Notification(title, { body, silent: true }); } catch (e) { /* ignore */ }
   }
 
-  function setTheme(theme) {
+  function setTheme(theme, fromAuto) {
+    if (!fromAuto) settings.themeAuto = false;
     state.theme = theme;
     document.documentElement.setAttribute("data-theme", theme);
     const color = THEME_COLORS[theme] || "#15171b";
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content", color);
-    document.querySelectorAll(".swatch").forEach((s) => s.classList.toggle("active", s.dataset.t === theme));
+    document.querySelectorAll(".swatch").forEach((s) => s.classList.toggle("active", s.dataset.t === theme && !settings.themeAuto));
+    const autoBtn = $("themeAutoBtn");
+    if (autoBtn) autoBtn.classList.toggle("on", !!settings.themeAuto);
+  }
+  function applyTheme() {
+    if (settings.themeAuto) {
+      const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const auto = dark ? "graphite" : "linen";
+      if (state.theme !== auto) {
+        state.theme = auto;
+        document.documentElement.setAttribute("data-theme", auto);
+        const color = THEME_COLORS[auto] || "#15171b";
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", color);
+      }
+      document.querySelectorAll(".swatch").forEach((s) => s.classList.remove("active"));
+      const autoBtn = $("themeAutoBtn");
+      if (autoBtn) autoBtn.classList.add("on");
+    } else {
+      setTheme(state.theme, true);
+    }
   }
 
   function renderPips() {
@@ -389,6 +458,7 @@
               ? '<div class="pomo-bar" title="' + t.pomodoros + " / " + t.target + '"><span style="width:' + pct + '%"></span></div>' +
                 '<button type="button" class="today-line pomo-hit">' + t.pomodoros + " / " + t.target + "</button>"
               : '<button type="button" class="today-line pomo-hit">' + (t.pomodoros ? t.pomodoros + " focus · " : "") + "target</button>") +
+            '<button type="button" class="today-line focus-len" title="Custom focus length">' + (t.focusMin ? t.focusMin + "m" : "25m") + "</button>" +
             '<button class="due-chip' + (t.due === "today" ? " today" : "") + '" type="button">' + dueLabel + "</button>" +
           "</div>" +
         "</div>" +
@@ -406,6 +476,10 @@
       row.querySelector(".title").onclick = () => {
         if (t.archived || t.done) return;
         state.activeTaskId = state.activeTaskId === t.id ? null : t.id;
+        if (state.mode === "focus" && !state.running) {
+          state.secondsLeft = durationFor("focus");
+          renderTimer();
+        }
         save(); renderTasks();
       };
       row.querySelector(".title").ondblclick = (e) => { e.preventDefault(); startEdit(row, t); };
@@ -419,6 +493,20 @@
         pomoHit.onclick = (e) => {
           e.stopPropagation();
           t.target = t.target >= 12 ? 0 : (t.target || 0) + 1;
+          save(); renderTasks();
+        };
+      }
+      const focusLen = row.querySelector(".focus-len");
+      if (focusLen) {
+        focusLen.onclick = (e) => {
+          e.stopPropagation();
+          const cycle = [0, 15, 25, 45, 50, 90];
+          const i = cycle.indexOf(t.focusMin || 0);
+          t.focusMin = cycle[(i + 1) % cycle.length];
+          if (t.id === state.activeTaskId && state.mode === "focus" && !state.running) {
+            state.secondsLeft = durationFor("focus");
+            renderTimer();
+          }
           save(); renderTasks();
         };
       }
@@ -504,14 +592,54 @@
     const today = countRange(startOfDay(), startOfDay() + 86400000);
     $("todayLine").textContent = today + " session" + (today === 1 ? "" : "s") + " today · goal " + settings.dailyGoal;
     document.body.setAttribute("data-mode", state.mode);
-    setTheme(state.theme);
+    applyTheme();
     ringProgress.style.strokeDashoffset = C * (1 - state.secondsLeft / total);
     $("playIcon").innerHTML = state.running
       ? '<rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/>'
       : '<path d="M8 5v14l11-7z"/>';
     $("playBtn").setAttribute("aria-label", state.running ? "Pause" : "Start");
     $("ringStage").classList.toggle("breathing", state.running);
-    document.title = state.running ? mm + ":" + ss + " · Cadence" : "Cadence";
+    const modeShort = MODE_LABEL[state.mode] || "Focus";
+    if (state.running) {
+      document.title = mm + ":" + ss + " · " + modeShort + " · Cadence";
+    } else {
+      document.title = "Cadence";
+    }
+    // Active task on ring
+    const at = state.activeTaskId && state.tasks.find((t) => t.id === state.activeTaskId);
+    const atl = $("activeTaskLabel");
+    if (atl) {
+      if (at && state.mode === "focus") {
+        atl.hidden = false;
+        atl.textContent = at.title + (at.focusMin ? " · " + at.focusMin + "m" : "");
+      } else {
+        atl.hidden = true;
+      }
+    }
+    // Ends-at estimate
+    const ea = $("endsAt");
+    if (ea) {
+      if (state.running && state.endsAt) {
+        const d = new Date(state.endsAt);
+        ea.hidden = false;
+        ea.textContent = "Ends ~" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+      } else {
+        ea.hidden = true;
+      }
+    }
+    // Break suggestions
+    const bs = $("breakSuggest");
+    if (bs) {
+      if (!state.running && (state.mode === "short" || state.mode === "long") && !state.zen) {
+        bs.hidden = false;
+        const idea = BREAK_IDEAS[(state.focusCount + state.mode.length) % BREAK_IDEAS.length];
+        $("breakText").textContent = idea;
+      } else if (state.running && (state.mode === "short" || state.mode === "long")) {
+        bs.hidden = false;
+      } else {
+        bs.hidden = true;
+      }
+    }
     document.querySelectorAll(".mode-switch button").forEach((b) => b.classList.toggle("on", b.dataset.mode === state.mode));
     renderPips();
   }
@@ -577,11 +705,21 @@
       days.push({ label: names[new Date(ts).getDay()], m });
       max = Math.max(max, m);
     }
-    days.forEach((d0) => {
+    days.forEach((d0, i) => {
       const col = document.createElement("div");
       col.className = "bar-col";
+      const ts = todayFrom - (6 - i) * 86400000;
+      const dk = dayKey(ts);
       const h = Math.max(4, Math.round((d0.m / max) * 130));
-      col.innerHTML = '<div class="bar" style="height:' + h + 'px" title="' + d0.m + ' min"></div><span>' + d0.label + "</span>";
+      col.innerHTML = '<div class="bar" style="height:' + h + 'px" title="' + d0.m + ' min — click for log"></div><span>' + d0.label + "</span>";
+      col.onclick = () => {
+        state.logDayFilter = dk;
+        state.logFilter = "all";
+        state.logLimit = LOG_PAGE;
+        document.querySelectorAll("[data-filter]").forEach((x) => x.classList.remove("on"));
+        showPage("log");
+        toast("Showing " + dk);
+      };
       bars.appendChild(col);
     });
 
@@ -599,7 +737,18 @@
       let cls = "";
       if (m >= 100) cls = "h4"; else if (m >= 50) cls = "h3"; else if (m >= 25) cls = "h2"; else if (m > 0) cls = "h1";
       cell.className = "heat-cell " + cls;
-      cell.title = dayKey(t) + ": " + m + "m";
+      const dk = dayKey(t);
+      cell.title = dk + ": " + m + "m — click to open log";
+      cell.setAttribute("role", "button");
+      cell.tabIndex = 0;
+      cell.onclick = () => {
+        state.logDayFilter = dk;
+        state.logFilter = "all";
+        state.logLimit = LOG_PAGE;
+        document.querySelectorAll("[data-filter]").forEach((x) => x.classList.remove("on"));
+        showPage("log");
+        toast("Showing " + dk);
+      };
       heat.appendChild(cell);
     }
 
@@ -650,8 +799,18 @@
 
   function filteredLog() {
     const q = state.logSearch.trim().toLowerCase();
+    const todayFrom = startOfDay();
+    const { weekFrom } = weekBounds(Date.now());
     return state.sessions.filter((s) => {
-      if (state.logFilter !== "all" && s.mode !== state.logFilter) return false;
+      if (state.logDayFilter) {
+        if (dayKey(s.endedAt) !== state.logDayFilter) return false;
+      } else if (state.logFilter === "today") {
+        if (s.endedAt < todayFrom) return false;
+      } else if (state.logFilter === "week") {
+        if (s.endedAt < weekFrom) return false;
+      } else if (state.logFilter !== "all" && s.mode !== state.logFilter) {
+        return false;
+      }
       if (state.logTaskFilter !== "all") {
         if (state.logTaskFilter === "_none" && s.taskId) return false;
         if (state.logTaskFilter !== "_none" && s.taskId !== state.logTaskFilter) return false;
@@ -739,6 +898,11 @@
 
   function logSession(mode, elapsed, completed) {
     if (elapsed < 15 && !completed) return null;
+    if (state.demo && completed && mode === "focus") {
+      state.sessions = [];
+      state.demo = false;
+      toast("Sample history cleared — your real sessions start now");
+    }
     const now = Date.now();
     const entry = {
       id: uid(), mode, startedAt: now - elapsed * 1000, endedAt: now,
@@ -914,8 +1078,18 @@
   const themeBtn = $("themeBtn"), themePopover = $("themePopover");
   themeBtn.onclick = (e) => { e.stopPropagation(); themePopover.classList.toggle("open"); };
   document.querySelectorAll(".swatch").forEach((s) => {
-    s.onclick = () => { setTheme(s.dataset.t); themePopover.classList.remove("open"); save(); };
+    s.onclick = () => { settings.themeAuto = false; setTheme(s.dataset.t); themePopover.classList.remove("open"); save(); };
   });
+  if ($("themeAutoBtn")) {
+    $("themeAutoBtn").onclick = (e) => {
+      e.stopPropagation();
+      settings.themeAuto = !settings.themeAuto;
+      applyTheme();
+      themePopover.classList.remove("open");
+      save();
+      toast(settings.themeAuto ? "Following system theme" : "Theme locked to " + state.theme);
+    };
+  }
   document.addEventListener("click", (e) => {
     if (!themePopover.contains(e.target) && e.target !== themeBtn) themePopover.classList.remove("open");
   });
@@ -930,7 +1104,8 @@
   function refreshStepper(el) {
     const key = el.dataset.key, min = +el.dataset.min, max = +el.dataset.max, suffix = el.dataset.suffix;
     const v = settings[key];
-    $(el.dataset.val).textContent = v + " " + suffix;
+    if (key === "volume") $(el.dataset.val).textContent = VOLUME_LABEL[v] || "Normal";
+    else $(el.dataset.val).textContent = v + " " + suffix;
     el.querySelector(".step-fill").style.width = (((v - min) / (max - min)) * 100) + "%";
     el.querySelectorAll(".step-btn").forEach((b) => {
       const dir = +b.dataset.dir;
@@ -984,6 +1159,18 @@
   bindSwitch("switchTick", "tickSound");
   bindSwitch("switchNotify", "notify");
   bindSwitch("switchVibrate", "vibrate");
+  if ($("switchThemeAuto")) {
+    const el = $("switchThemeAuto");
+    el.classList.toggle("on", settings.themeAuto);
+    el.setAttribute("aria-checked", settings.themeAuto ? "true" : "false");
+    el.onclick = () => {
+      settings.themeAuto = !settings.themeAuto;
+      el.classList.toggle("on", settings.themeAuto);
+      el.setAttribute("aria-checked", settings.themeAuto ? "true" : "false");
+      applyTheme();
+      save();
+    };
+  }
 
   function renderSoundPicks() {
     document.querySelectorAll("[data-sound]").forEach((b) => {
@@ -1023,6 +1210,32 @@
     markExported();
     toast("Exported JSON");
   };
+  function exportCsv() {
+    const rows = [["id", "mode", "startedAt", "endedAt", "durationSec", "completed", "task", "note"]];
+    state.sessions.slice().sort((a, b) => a.endedAt - b.endedAt).forEach((s) => {
+      const task = state.tasks.find((t) => t.id === s.taskId);
+      const esc = (v) => {
+        const str = v == null ? "" : String(v);
+        return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+      };
+      rows.push([
+        s.id, s.mode,
+        new Date(s.startedAt).toISOString(),
+        new Date(s.endedAt).toISOString(),
+        s.durationSec, s.completed ? "1" : "0",
+        task ? task.title : "",
+        s.note || "",
+      ].map(esc));
+    });
+    const blob = new Blob([rows.map((r) => r.join(",")).join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "cadence-sessions.csv";
+    a.click();
+    markExported();
+    toast("Exported CSV");
+  }
+  if ($("exportCsvBtn")) $("exportCsvBtn").onclick = exportCsv;
   $("copyBtn").onclick = async () => {
     const text = JSON.stringify(exportPayload(), null, 2);
     try {
@@ -1090,6 +1303,7 @@
   document.querySelectorAll("[data-filter]").forEach((b) => {
     b.onclick = () => {
       state.logFilter = b.dataset.filter;
+      state.logDayFilter = null;
       state.logLimit = LOG_PAGE;
       document.querySelectorAll("[data-filter]").forEach((x) => x.classList.toggle("on", x === b));
       renderLog();
@@ -1130,16 +1344,29 @@
     if (k === "2") switchMode("short");
     if (k === "3") switchMode("long");
   });
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") tick(); });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      tick();
+      if (state.running) renderTimer();
+    }
+  });
+  window.addEventListener("pageshow", () => { if (state.running) tick(); });
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    if (settings.themeAuto) { applyTheme(); save(); }
+  });
 
   function renderAll() {
-    setTheme(state.theme);
+    applyTheme();
     refreshAllSteppers();
     $("switchAuto").classList.toggle("on", settings.autoStart);
     $("switchSound").classList.toggle("on", settings.sound);
     $("switchTick").classList.toggle("on", settings.tickSound);
     $("switchNotify").classList.toggle("on", settings.notify);
     $("switchVibrate").classList.toggle("on", settings.vibrate);
+    if ($("switchThemeAuto")) {
+      $("switchThemeAuto").classList.toggle("on", settings.themeAuto);
+      $("switchThemeAuto").setAttribute("aria-checked", settings.themeAuto ? "true" : "false");
+    }
     renderSoundPicks();
     renderTimer(); renderTasks();
     if (state.page === "reports") renderReports();
@@ -1178,6 +1405,13 @@
     }
     state.pendingNoteId = null;
     $("noteModal").classList.remove("open");
+    const today = dayKey(Date.now());
+    const todayCount = countRange(startOfDay(), startOfDay() + 86400000);
+    const shouldReview = todayCount >= settings.dailyGoal && state.lastReviewDay !== today;
+    if (shouldReview && $("reviewModal")) {
+      openReviewModal();
+      return;
+    }
     if (state.pendingAutoStart) {
       state.pendingAutoStart = false;
       startTimer();
@@ -1185,6 +1419,35 @@
   }
   $("noteSkip").onclick = () => closeNote(false);
   $("noteSave").onclick = () => closeNote(true);
+
+  function openReviewModal() {
+    $("reviewInput").value = "";
+    $("reviewModal").classList.add("open");
+    setTimeout(() => $("reviewInput").focus(), 50);
+  }
+  function closeReview(saveIt) {
+    if (saveIt) {
+      const text = $("reviewInput").value.trim();
+      if (text) {
+        state.sessions.push({
+          id: uid(), mode: "focus", startedAt: Date.now(), endedAt: Date.now(),
+          durationSec: 0, completed: true, note: "Review: " + text, taskId: undefined,
+        });
+      }
+      state.lastReviewDay = dayKey(Date.now());
+      save();
+    } else {
+      state.lastReviewDay = dayKey(Date.now());
+      save();
+    }
+    $("reviewModal").classList.remove("open");
+    if (state.pendingAutoStart) {
+      state.pendingAutoStart = false;
+      startTimer();
+    }
+  }
+  if ($("reviewSkip")) $("reviewSkip").onclick = () => closeReview(false);
+  if ($("reviewSave")) $("reviewSave").onclick = () => closeReview(true);
 
   let toastTimer = null;
   let toastUndo = null;

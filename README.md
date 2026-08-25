@@ -6,17 +6,22 @@ Vanilla HTML, CSS, and JavaScript. No build step, no accounts, nothing uploaded.
 
 ## Features
 
-- Focus / short break / long break ring timer, with an “up next” preview
+- Focus / short break / long break ring timer, with an “up next” preview and estimated end time
+- Live tab title while the timer runs
+- Active task shown on the ring; custom focus length per task (15 / 25 / 45 / 50 / 90)
 - Zen mode while a focus session is running — tap the timer to bring chrome back
-- Five themes: Graphite, Linen, Moss, Dusk, **OLED**
+- Five themes + **Auto** (follows system light/dark): Graphite, Linen, Moss, Dusk, **OLED**
+- Break suggestions on short/long breaks
+- Daily review prompt when you hit your daily goal
 - Daily, weekly, and monthly goals
 - Tasks: edit, reorder, today/later, pause, pomodoro targets, undo delete
 - Optional session notes after a completed focus block
 - Reports: weekly bars, heatmap, hourly focus, time-by-task, longest streak, completion rate
-- Session log with search, task filter, and pagination
-- Sound (chime / bell / wood), optional tick, vibration, notifications
-- Export JSON, copy JSON to clipboard, import with validation, report PNG
-- Installable PWA with offline cache
+- Click a heatmap cell or week bar to open that day in the Log
+- Session log with search, task filter, Today / This week chips, and pagination
+- Sound (chime / bell / wood), volume, optional tick, vibration, notifications
+- Export JSON / CSV, copy JSON to clipboard, import with validation, report PNG
+- Installable PWA with offline cache (system fonts keep it sharp offline)
 - Keyboard shortcuts (`?` to view, `T` to add a task)
 - Changelog popup when you ship a new version
 

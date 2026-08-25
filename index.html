@@ -37,6 +37,7 @@
           <div class="swatch" data-t="moss" title="Moss"></div>
           <div class="swatch" data-t="dusk" title="Dusk"></div>
           <div class="swatch" data-t="oled" title="OLED"></div>
+          <button type="button" class="theme-auto-chip" id="themeAutoBtn" title="Follow system light/dark">Auto</button>
         </div>
       </div>
       <button class="icon-btn" id="settingsBtn" aria-label="Open settings" title="Settings">
@@ -61,12 +62,18 @@
         <circle class="ring-progress" id="ringProgress" cx="140" cy="140" r="120"></circle>
       </svg>
       <div class="ring-center">
-        <div class="time" id="timeDisplay">25:00</div>
+        <div class="time" id="timeDisplay" aria-live="polite" aria-atomic="true">25:00</div>
         <div class="state-label" id="stateLabel">Ready</div>
+        <div class="active-task" id="activeTaskLabel" hidden></div>
         <div class="up-next" id="upNext"></div>
+        <div class="ends-at" id="endsAt" hidden></div>
       </div>
     </div>
     <p class="zen-hint" id="zenHint">Tap the timer to show controls</p>
+    <div class="break-suggest" id="breakSuggest" hidden>
+      <span class="break-label">Break idea</span>
+      <span id="breakText"></span>
+    </div>
     <div class="pips" id="pips"></div>
     <div class="controls">
       <button class="btn btn-secondary" id="resetBtn" aria-label="Reset session">
@@ -141,6 +148,8 @@
       <button class="chip" data-filter="focus">Focus</button>
       <button class="chip" data-filter="short">Short</button>
       <button class="chip" data-filter="long">Long</button>
+      <button class="chip" data-filter="today">Today</button>
+      <button class="chip" data-filter="week">This week</button>
     </div>
     <div class="log-tools">
       <input id="logSearch" type="search" placeholder="Search tasks or notes" aria-label="Search log" autocomplete="off">
@@ -215,11 +224,19 @@
       <button type="button" class="chip" data-sound="wood">Wood</button>
     </div>
   </div>
+  <div class="field"><label>Sound volume <span class="val" id="vVolume">Normal</span></label>
+    <div class="stepper" data-key="volume" data-min="1" data-max="3" data-step="1" data-suffix="" data-val="vVolume">
+      <button type="button" class="step-btn" data-dir="-1" aria-label="Quieter">−</button>
+      <div class="step-bar"><div class="step-fill"></div></div>
+      <button type="button" class="step-btn" data-dir="1" aria-label="Louder">+</button>
+    </div></div>
   <div class="toggle-row"><span>Tick while focusing</span><div class="switch" id="switchTick" role="switch" aria-checked="false"></div></div>
+  <div class="toggle-row"><span>Follow system theme</span><div class="switch" id="switchThemeAuto" role="switch" aria-checked="false"></div></div>
   <div class="toggle-row"><span>Vibrate on completion</span><div class="switch on" id="switchVibrate" role="switch" aria-checked="true"></div></div>
   <div class="toggle-row"><span>Desktop notifications</span><div class="switch" id="switchNotify" role="switch" aria-checked="false"></div></div>
   <p class="sub section-label">Data</p>
   <button class="ghost-btn" id="exportBtn" type="button">Export report JSON</button>
+  <button class="ghost-btn" id="exportCsvBtn" type="button">Export sessions CSV</button>
   <button class="ghost-btn" id="copyBtn" type="button">Copy data to clipboard</button>
   <button class="ghost-btn" id="importBtn" type="button">Import JSON</button>
   <input id="importFile" type="file" accept="application/json" hidden>
@@ -277,6 +294,18 @@
     <div class="tour-actions">
       <button class="ghost-btn" id="noteSkip" type="button">Skip</button>
       <button class="drawer-close" id="noteSave" type="button">Save note</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="reviewModal">
+  <div class="box">
+    <h3>How was today?</h3>
+    <p>A one-line note for your rhythm. Skip anytime.</p>
+    <textarea id="reviewInput" rows="3" maxlength="280" placeholder="What worked, what dragged…"></textarea>
+    <div class="tour-actions">
+      <button class="ghost-btn" id="reviewSkip" type="button">Skip</button>
+      <button class="drawer-close" id="reviewSave" type="button">Save</button>
     </div>
   </div>
 </div>

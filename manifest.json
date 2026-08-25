@@ -1,7 +1,7 @@
 {
   "name": "Cadence",
   "short_name": "Cadence",
-  "description": "A calm pomodoro timer with reports, tasks, and OLED-ready themes.",
+  "description": "A calm pomodoro timer with reports, tasks, live title, and OLED-ready themes.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
