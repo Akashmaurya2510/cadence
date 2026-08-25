@@ -8,9 +8,21 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", moss: "#121a16", dusk: "#17151f", oled: "#000000" };
 
-  const APP_VERSION = "2.3.0";
+  const APP_VERSION = "2.4.0";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "2.4.0",
+      date: "August 2026",
+      title: "Cadence 2.4",
+      blurb: "Full-screen settings, footer, PWA updates that stick, and task select that stays selected.",
+      items: [
+        { tag: "New", text: "Settings open as a full-screen sheet instead of a side drawer." },
+        { tag: "New", text: "Site footer with last-updated → What's new; changelog close (X)." },
+        { tag: "Fix", text: "Tapping a task always selects it (no accidental unselect)." },
+        { tag: "Fix", text: "Shortcuts live in Settings; PWA refresh picks up new builds." },
+      ],
+    },
     {
       version: "2.3.0",
       date: "August 2026",
@@ -543,19 +555,16 @@
         "</div>";
       function selectTask(start) {
         if (t.archived || t.done) return;
+        // Always select (never toggle off on title click)
         state.activeTaskId = t.id;
-        if (state.mode !== "focus") {
-          if (!state.running) {
-            state.mode = "focus";
-            state.secondsLeft = durationFor("focus");
-          }
-        } else if (!state.running) {
+        if (!state.running) {
+          if (state.mode !== "focus") state.mode = "focus";
           state.secondsLeft = durationFor("focus");
         }
         save(); renderTasks(); renderTimer();
         showPage("timer");
         if (start && !state.running) startTimer();
-        else if (!start) toast("Ready · " + t.title);
+        else if (!start) toast("Selected · " + t.title);
       }
       row.querySelector(".chk").onclick = (e) => {
         e.stopPropagation();
@@ -1241,10 +1250,19 @@
   });
 
   const drawer = $("drawer"), backdrop = $("backdrop");
-  function openDrawer() { drawer.classList.add("open"); backdrop.classList.add("open"); }
-  function shutDrawer() { drawer.classList.remove("open"); backdrop.classList.remove("open"); }
+  function openDrawer() {
+    drawer.classList.add("open");
+    backdrop.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+  function shutDrawer() {
+    drawer.classList.remove("open");
+    backdrop.classList.remove("open");
+    document.body.style.overflow = "";
+  }
   $("settingsBtn").onclick = openDrawer;
   $("closeDrawer").onclick = shutDrawer;
+  if ($("closeDrawerBottom")) $("closeDrawerBottom").onclick = shutDrawer;
   backdrop.onclick = shutDrawer;
 
   function refreshStepper(el) {
@@ -1459,7 +1477,8 @@
     toast("All data cleared");
   };
 
-  $("helpBtn").onclick = () => $("helpModal").classList.add("open");
+  function openHelp() { $("helpModal").classList.add("open"); }
+  if ($("shortcutsBtn")) $("shortcutsBtn").onclick = () => { shutDrawer(); openHelp(); };
   $("helpModal").onclick = (e) => { if (e.target.id === "helpModal") $("helpModal").classList.remove("open"); };
   $("closeHelp").onclick = () => $("helpModal").classList.remove("open");
 
@@ -1498,6 +1517,7 @@
     if (typing) return;
     if (e.code === "Space") { e.preventDefault(); $("playBtn").click(); }
     if (e.key === "?") { e.preventDefault(); $("helpModal").classList.toggle("open"); }
+    /* shortcuts also in Settings */
     if (e.key === ",") { e.preventDefault(); openDrawer(); }
     const k = e.key.toLowerCase();
     if (k === "r") $("resetBtn").click();
@@ -1782,7 +1802,11 @@
   }
   $("changeOk").onclick = dismissChangelog;
   $("changeLater").onclick = () => $("changelogModal").classList.remove("open");
+  if ($("changeCloseX")) $("changeCloseX").onclick = () => $("changelogModal").classList.remove("open");
   $("whatsNewBtn").onclick = () => { shutDrawer(); openChangelog(true); };
+  if ($("footerUpdated")) {
+    $("footerUpdated").onclick = () => openChangelog(true);
+  }
 
   $("pngBtn").onclick = () => exportReportPng();
 
@@ -1894,7 +1918,26 @@
     const scripts = document.getElementsByTagName("script");
     const me = scripts[scripts.length - 1];
     const swUrl = me && me.src ? new URL("../sw.js", me.src).href : "./sw.js";
-    navigator.serviceWorker.register(swUrl).catch(() => { /* ignore */ });
+    navigator.serviceWorker.register(swUrl + "?v=" + APP_VERSION).then((reg) => {
+      // Force check for updates on each load
+      try { reg.update(); } catch (e) { /* ignore */ }
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener("statechange", () => {
+          if (nw.state === "installed" && navigator.serviceWorker.controller) {
+            // New build ready — activate immediately
+            nw.postMessage({ type: "SKIP_WAITING" });
+          }
+        });
+      });
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (refreshing) return;
+        refreshing = true;
+        location.reload();
+      });
+    }).catch(() => { /* ignore */ });
   }
 
   const hadData = load();

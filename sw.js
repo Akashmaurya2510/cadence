@@ -1,5 +1,6 @@
-const CACHE = "cadence-v2.3.0";
+const CACHE = "cadence-v2.4.0";
 const ASSETS = [
+  "./",
   "./index.html",
   "./css/styles.css",
   "./js/app.js",
@@ -26,10 +27,43 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
+});
+
+// Network-first for HTML/JS/CSS so refresh gets the new build; cache fallback offline.
+// Cache-first for icons and other static assets.
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
+
+  const path = url.pathname;
+  const isShell =
+    path.endsWith(".html") ||
+    path.endsWith(".js") ||
+    path.endsWith(".css") ||
+    path.endsWith("/") ||
+    path.endsWith("manifest.json") ||
+    event.request.mode === "navigate";
+
+  if (isShell) {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const copy = res.clone();
+            caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+          }
+          return res;
+        })
+        .catch(() =>
+          caches.match(event.request).then((cached) => cached || caches.match("./index.html"))
+        )
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
@@ -38,7 +72,7 @@ self.addEventListener("fetch", (event) => {
         const copy = res.clone();
         caches.open(CACHE).then((cache) => cache.put(event.request, copy));
         return res;
-      }).catch(() => caches.match("./index.html"));
+      });
     })
   );
 });
