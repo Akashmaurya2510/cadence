@@ -191,9 +191,17 @@
   }
 
   function snapshot() {
+    // Persist endsAt so a running timer survives refresh / app kill
+    let endsAt = state.endsAt;
+    let secondsLeft = state.secondsLeft;
+    let running = !!state.running;
+    if (running && endsAt) {
+      secondsLeft = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+    }
     return {
       schemaVersion: SCHEMA_VERSION,
-      settings, theme: state.theme, mode: state.mode, secondsLeft: state.secondsLeft,
+      settings, theme: state.theme, mode: state.mode, secondsLeft,
+      running, endsAt: running ? endsAt : null,
       focusCount: state.focusCount, tasks: state.tasks, activeTaskId: state.activeTaskId,
       sessions: state.sessions, demo: state.demo, lastExportAt: state.lastExportAt,
       lastReviewDay: state.lastReviewDay,
@@ -214,7 +222,7 @@
       if (!settings.soundChoice) settings.soundChoice = "chime";
       state.theme = d.theme || "graphite";
       state.mode = d.mode || "focus";
-      state.secondsLeft = d.secondsLeft || durationFor(state.mode);
+      state.secondsLeft = d.secondsLeft != null ? d.secondsLeft : durationFor(state.mode);
       state.focusCount = d.focusCount || 0;
       state.tasks = Array.isArray(d.tasks) ? d.tasks.map(normalizeTask) : [];
       state.activeTaskId = d.activeTaskId || null;
@@ -223,6 +231,9 @@
       state.lastExportAt = d.lastExportAt || 0;
       state.lastReviewDay = d.lastReviewDay || null;
       state.schemaVersion = d.schemaVersion || 1;
+      // Restore timer across refresh — actual resume in resumeTimerIfNeeded()
+      state._restoreEndsAt = typeof d.endsAt === "number" ? d.endsAt : null;
+      state._restoreRunning = !!d.running && !!d.endsAt;
       if (settings.volume == null) settings.volume = 2;
       if (settings.themeAuto == null) settings.themeAuto = false;
       if (!settings.accent) settings.accent = "default";
@@ -555,7 +566,13 @@
         "</div>";
       function selectTask(start) {
         if (t.archived || t.done) return;
-        // Always select (never toggle off on title click)
+        if (!start && state.activeTaskId === t.id) {
+          // Second tap on the active task unselects it
+          state.activeTaskId = null;
+          save(); renderTasks(); renderTimer();
+          toast("Unselected");
+          return;
+        }
         state.activeTaskId = t.id;
         if (!state.running) {
           if (state.mode !== "focus") state.mode = "focus";
@@ -1118,6 +1135,8 @@
       if (state.lastTickSecond !== rem) {
         state.lastTickSecond = rem;
         playTick();
+        // Persist about every 5 seconds while running
+        if (rem % 5 === 0) save();
       }
       state.secondsLeft = rem;
       renderTimer();
@@ -1130,6 +1149,7 @@
     state.timerId = setInterval(tick, 200);
     renderTimer();
     scheduleZen();
+    save();
   }
   function stopTimer() {
     if (state.running && state.endsAt) state.secondsLeft = Math.max(0, Math.ceil((state.endsAt - Date.now()) / 1000));
@@ -1940,9 +1960,43 @@
     }).catch(() => { /* ignore */ });
   }
 
+  function resumeTimerIfNeeded() {
+    const endsAt = state._restoreEndsAt;
+    const wasRunning = state._restoreRunning;
+    state._restoreEndsAt = null;
+    state._restoreRunning = false;
+    if (!wasRunning || !endsAt) return;
+    const rem = Math.ceil((endsAt - Date.now()) / 1000);
+    if (rem <= 0) {
+      // Timer finished while away — complete the phase
+      state.running = false;
+      state.endsAt = null;
+      state.secondsLeft = 0;
+      try { completePhase(); } catch (e) { state.secondsLeft = durationFor(state.mode); save(); }
+      return;
+    }
+    state.endsAt = endsAt;
+    state.secondsLeft = rem;
+    state.running = true;
+    clearInterval(state.timerId);
+    state.timerId = setInterval(tick, 200);
+    renderTimer();
+    scheduleZen();
+    save();
+  }
+
+  // Flush timer state when tab/app is backgrounded or closed
+  window.addEventListener("pagehide", () => { try { save(); } catch (e) { /* ignore */ } });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      try { save(); } catch (e) { /* ignore */ }
+    }
+  });
+
   const hadData = load();
   const hash = (location.hash || "").replace("#", "");
   try { renderAll(); } catch (e) { console.error(e); toast("Something went wrong rendering. Try Settings → Clear, or import a backup."); }
+  resumeTimerIfNeeded();
   if (hash === "reports" || hash === "log") showPage(hash);
 
   if (!localStorage.getItem(TOUR_KEY)) {
