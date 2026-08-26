@@ -799,6 +799,8 @@ footer.hint { margin-top: auto; padding-top: var(--space-6); font-size: 12px; co
 /* Zen / focus mode: no scroll, chrome fully removed from layout (not just invisible) */
 html.zen-lock,
 body.zen {
+  /* Monochrome focus */
+  filter: grayscale(1) contrast(1.06);
   overflow: hidden !important;
   overscroll-behavior: none;
   height: 100%;
@@ -1348,4 +1350,29 @@ body.compact .page-head { margin-bottom: var(--space-4); }
   .page.active {
     animation: none !important;
   }
+}
+
+
+/* Mute toggle in controls */
+.mute-btn {
+  position: relative;
+}
+.mute-btn.is-muted {
+  color: var(--text-dim);
+  border-color: var(--border);
+}
+.mute-btn.is-muted::after {
+  content: "";
+  position: absolute;
+  width: 2px;
+  height: 18px;
+  background: currentColor;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border-radius: 1px;
+  pointer-events: none;
+}
+body.zen {
+  /* ensure filter stacking doesn't break fixed tabbar (already hidden) */
 }

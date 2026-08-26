@@ -8,9 +8,19 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", moss: "#121a16", dusk: "#17151f", oled: "#000000" };
 
-  const APP_VERSION = "2.4.6";
+  const APP_VERSION = "2.4.7";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "2.4.7",
+      date: "August 2026",
+      title: "Cadence 2.4.7",
+      blurb: "Monochrome zen and a one-tap mute for tick and sounds.",
+      items: [
+        { tag: "New", text: "Zen mode goes monochrome so the ring stays calm and distraction-free." },
+        { tag: "New", text: "Speaker button on the timer row mutes tick and completion sounds." },
+      ],
+    },
     {
       version: "2.4.6",
       date: "August 2026",
@@ -96,7 +106,7 @@
     dailyGoal: 8, weeklyGoal: 40, monthlyGoal: 160,
     autoStart: false, sound: true, notify: false, tickSound: false,
     vibrate: true, soundChoice: "chime", volume: 2, themeAuto: false,
-    accent: "default", compact: false, confirmSkip: true,
+    accent: "default", compact: false, confirmSkip: true, muted: false,
   };
   const ACCENTS = {
     default: null,
@@ -251,6 +261,7 @@
       if (!settings.accent) settings.accent = "default";
       if (settings.compact == null) settings.compact = false;
       if (settings.confirmSkip == null) settings.confirmSkip = true;
+      if (settings.muted == null) settings.muted = false;
       return true;
     } catch { return false; }
   }
@@ -373,7 +384,7 @@
     o.start(start); o.stop(start + dur + 0.02);
   }
   function playSound(choice) {
-    if (!settings.sound) return;
+    if (settings.muted || !settings.sound) return;
     try {
       const ac = ctx();
       const t0 = ac.currentTime;
@@ -396,8 +407,21 @@
       }
     } catch (e) { /* ignore */ }
   }
+
+  function renderMuteBtn() {
+    const btn = $("muteBtn");
+    const icon = $("muteIcon");
+    if (!btn || !icon) return;
+    const muted = !!settings.muted;
+    btn.classList.toggle("is-muted", muted);
+    btn.setAttribute("aria-label", muted ? "Unmute sounds" : "Mute tick and sounds");
+    btn.title = muted ? "Unmute" : "Mute";
+    icon.innerHTML = muted
+      ? '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" x2="16" y1="9" y2="15"/><line x1="16" x2="22" y1="9" y2="15"/>'
+      : '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>';
+  }
   function playTick() {
-    if (!settings.tickSound || state.mode !== "focus") return;
+    if (settings.muted || !settings.tickSound || state.mode !== "focus") return;
     if (document.visibilityState === "hidden") return;
     try {
       const ac = ctx();
