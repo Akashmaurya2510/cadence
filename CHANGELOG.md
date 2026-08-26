@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.6.0 — August 2026
+
+- **New** Badges on Reports: 7/30/100-day streaks, 10/50/100 hours focused — a fixed set, no open-ended achievement grind.
+- **New** Already-earned badges from your existing history are recognized immediately (quietly, no toast pile-up on first load); new ones unlock live with a toast.
+
 ## 2.5.5 — August 2026
 
 - **Fix** Switching tasks no longer resets a paused focus timer. Remaining time is stored per task (e.g. pause Tarun Sir at 52/60, do Nimisha Mam, come back — leftover minutes are still there).

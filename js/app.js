@@ -8,7 +8,7 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "2.5.5";
+  const APP_VERSION = "2.6.0";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
     {
@@ -225,6 +225,7 @@
     logDayFilter: null,
     lastReviewDay: null,
     auroraUnlocked: false,
+    badgesUnlocked: [],
     schemaVersion: SCHEMA_VERSION,
   };
 
@@ -321,6 +322,7 @@
       focusCount: state.focusCount, tasks: state.tasks, activeTaskId: state.activeTaskId,
       sessions: state.sessions, demo: state.demo, lastExportAt: state.lastExportAt,
       lastReviewDay: state.lastReviewDay, auroraUnlocked: !!state.auroraUnlocked,
+      badgesUnlocked: state.badgesUnlocked,
     };
   }
   function save() {
@@ -347,6 +349,7 @@
       state.lastExportAt = d.lastExportAt || 0;
       state.lastReviewDay = d.lastReviewDay || null;
       state.auroraUnlocked = !!d.auroraUnlocked;
+      state.badgesUnlocked = Array.isArray(d.badgesUnlocked) ? d.badgesUnlocked : [];
       state.schemaVersion = d.schemaVersion || 1;
       // Restore timer across refresh — actual resume in resumeTimerIfNeeded()
       state._restoreEndsAt = typeof d.endsAt === "number" ? d.endsAt : null;
@@ -439,6 +442,44 @@
       vibrate("success");
       toast("7-day streak · Aurora theme unlocked", "View", () => { const b = $("themeBtn"); if (b) b.click(); });
     }, 600);
+  }
+  function totalFocusSec() {
+    return focusSessions().reduce((a, s) => a + s.durationSec, 0);
+  }
+  const BADGES = [
+    { id: "streak7", label: "7-day streak", group: "streak", check: () => longestStreak() >= 7 },
+    { id: "streak30", label: "30-day streak", group: "streak", check: () => longestStreak() >= 30 },
+    { id: "streak100", label: "100-day streak", group: "streak", check: () => longestStreak() >= 100 },
+    { id: "hours10", label: "10 hours focused", group: "hours", check: () => totalFocusSec() >= 10 * 3600 },
+    { id: "hours50", label: "50 hours focused", group: "hours", check: () => totalFocusSec() >= 50 * 3600 },
+    { id: "hours100", label: "100 hours focused", group: "hours", check: () => totalFocusSec() >= 100 * 3600 },
+  ];
+  function renderBadges() {
+    const wrap = $("badgesRow");
+    if (!wrap) return;
+    wrap.innerHTML = BADGES.map((b) => {
+      const earned = state.badgesUnlocked.includes(b.id);
+      return '<div class="badge-chip ' + b.group + (earned ? " earned" : "") + '" title="' + b.label + (earned ? "" : " · not yet earned") + '">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>' +
+        "<span>" + b.label + "</span></div>";
+    }).join("");
+  }
+  function checkBadgeUnlocks(silent) {
+    const newly = BADGES.filter((b) => !state.badgesUnlocked.includes(b.id) && b.check());
+    if (!newly.length) return;
+    newly.forEach((b) => state.badgesUnlocked.push(b.id));
+    save();
+    renderBadges();
+    if (silent) return;
+    let i = 0;
+    const showNext = () => {
+      if (i >= newly.length) return;
+      const b = newly[i++];
+      vibrate("success");
+      toast(b.label + " unlocked", "View", () => { showPage("reports"); });
+      setTimeout(showNext, 2600);
+    };
+    setTimeout(showNext, 700);
   }
   function avgFocusSec() {
     const list = focusSessions();
@@ -938,6 +979,7 @@
   }
 
   function renderReports() {
+    renderBadges();
     const now = Date.now();
     const { todayFrom, weekFrom } = weekBounds(now);
     const monthFrom = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
@@ -1219,7 +1261,7 @@
       durationSec: elapsed, taskId: mode === "focus" ? state.activeTaskId : undefined, completed,
     };
     state.sessions.push(entry);
-    if (completed && mode === "focus") checkAuroraUnlock();
+    if (completed && mode === "focus") { checkAuroraUnlock(); checkBadgeUnlocks(); }
     if (completed && mode === "focus" && state.activeTaskId) {
       const t = state.tasks.find((x) => x.id === state.activeTaskId);
       if (t) {
@@ -2357,6 +2399,7 @@
   });
 
   const hadData = load();
+  checkBadgeUnlocks(true);
   const hash = (location.hash || "").replace("#", "");
   try { renderAll(); } catch (e) { console.error(e); toast("Something went wrong rendering. Try Settings → Clear, or import a backup."); }
   resumeTimerIfNeeded();
