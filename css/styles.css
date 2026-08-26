@@ -853,6 +853,13 @@ body.zen .page[data-page="timer"].active {
   flex: 1;
   min-height: 0;
   animation: none;
+  transition: transform 0.5s ease;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  body.zen .page[data-page="timer"].active {
+    transition: none;
+  }
 }
 body.zen .ring-stage {
   margin: 0 auto;

@@ -8,9 +8,19 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "2.5.2";
+  const APP_VERSION = "2.5.3";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "2.5.3",
+      date: "August 2026",
+      title: "Cadence 2.5.3",
+      blurb: "Zen: OLED pixel shift and immersive fullscreen.",
+      items: [
+        { tag: "New", text: "Anti-burn-in: zen view shifts a few pixels every minute." },
+        { tag: "New", text: "Entering zen requests fullscreen to hide system bars when the browser allows it." },
+      ],
+    },
     {
       version: "2.5.2",
       date: "August 2026",
@@ -1168,7 +1178,56 @@
     return entry;
   }
 
+  let zenShiftTimer = null;
+
+  function zenShiftTarget() {
+    return document.querySelector('.page[data-page="timer"]');
+  }
+
+  function clearZenShift() {
+    if (zenShiftTimer) {
+      clearInterval(zenShiftTimer);
+      zenShiftTimer = null;
+    }
+    const el = zenShiftTarget();
+    if (el) el.style.transform = "";
+  }
+
+  function applyZenPixelShift() {
+    if (!state.zen) return;
+    const el = zenShiftTarget();
+    if (!el) return;
+    // Random offset −2px … +2px on both axes (OLED burn-in mitigation)
+    const x = Math.floor(Math.random() * 5) - 2;
+    const y = Math.floor(Math.random() * 5) - 2;
+    el.style.transform = "translate(" + x + "px, " + y + "px)";
+  }
+
+  function startZenPixelShift() {
+    clearZenShift();
+    applyZenPixelShift();
+    zenShiftTimer = setInterval(applyZenPixelShift, 60000);
+  }
+
+  function enterImmersive() {
+    try {
+      const root = document.documentElement;
+      if (!document.fullscreenElement && root.requestFullscreen) {
+        root.requestFullscreen().catch(function () { /* needs gesture on some browsers */ });
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  function exitImmersive() {
+    try {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(function () { /* ignore */ });
+      }
+    } catch (e) { /* ignore */ }
+  }
+
   function setZen(on, showControls) {
+    const wasZen = state.zen;
     state.zen = !!on;
     if (!state.zen) state.zenShowControls = false;
     else if (showControls != null) state.zenShowControls = !!showControls;
@@ -1179,9 +1238,15 @@
     if (state.zen) {
       document.body.style.overflow = "hidden";
       document.documentElement.style.overflow = "hidden";
+      if (!wasZen) {
+        enterImmersive();
+        startZenPixelShift();
+      }
     } else {
       document.body.style.overflow = "";
       document.documentElement.style.overflow = "";
+      clearZenShift();
+      if (wasZen) exitImmersive();
     }
   }
   function setZenControls(show) {
