@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.5.5 — August 2026
+
+- **Fix** Switching tasks no longer resets a paused focus timer. Remaining time is stored per task (e.g. pause Tarun Sir at 52/60, do Nimisha Mam, come back — leftover minutes are still there).
+
 ## 2.5.0 — August 2026
 
 - **New** Two new themes, Glacier (cool slate/ice) and Espresso (warm copper/sage), replacing Moss and Dusk.

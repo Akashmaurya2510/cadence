@@ -8,9 +8,19 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "2.5.4";
+  const APP_VERSION = "2.5.5";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "2.5.5",
+      date: "August 2026",
+      title: "Cadence 2.5.5",
+      blurb: "Paused focus progress is remembered per task when you switch lectures.",
+      items: [
+        { tag: "Fix", text: "Switching tasks no longer resets a paused focus timer — remaining time is kept per task." },
+        { tag: "Fix", text: "Selecting Tarun Sir / Nimisha Mam (or any task) restores the leftover minutes you paused at." },
+      ],
+    },
     {
       version: "2.5.4",
       date: "August 2026",
@@ -246,6 +256,28 @@
     }
     return (mode === "short" ? settings.short : settings.long) * 60;
   }
+  function taskFocusDuration(t) {
+    if (t && t.focusMin >= 5) return t.focusMin * 60;
+    return settings.focus * 60;
+  }
+  /** Persist leftover focus seconds onto the current task (when paused / switching). */
+  function saveTaskRemaining() {
+    if (state.mode !== "focus" || state.running) return;
+    if (!state.activeTaskId) return;
+    const t = state.tasks.find((x) => x.id === state.activeTaskId);
+    if (!t) return;
+    const full = taskFocusDuration(t);
+    if (state.secondsLeft > 0 && state.secondsLeft < full) {
+      t.remainingSec = state.secondsLeft;
+    } else {
+      t.remainingSec = 0;
+    }
+  }
+  /** Clear leftover on a task (after complete / reset). */
+  function clearTaskRemaining(taskId) {
+    const t = state.tasks.find((x) => x.id === (taskId || state.activeTaskId));
+    if (t) t.remainingSec = 0;
+  }
   function pad(n) { return String(n).padStart(2, "0"); }
   function fmtMs(sec) {
     const h = Math.floor(sec / 3600);
@@ -331,6 +363,7 @@
   }
   function normalizeTask(t) {
     const focusMin = Number(t.focusMin) || 0;
+    const rem = Number(t.remainingSec);
     return {
       id: t.id || uid(),
       title: String(t.title || "Untitled"),
@@ -340,6 +373,7 @@
       focusMin: focusMin >= 5 && focusMin <= 90 ? focusMin : 0,
       due: t.due === "today" || t.due === "later" ? t.due : null,
       archived: !!t.archived,
+      remainingSec: rem > 0 && rem <= 90 * 60 ? Math.floor(rem) : 0,
     };
   }
   function isValidSession(s) {
@@ -684,10 +718,20 @@
         "</div>";
       function selectTask(start) {
         if (t.archived || t.done) return;
+        // Keep paused progress on the previous task before switching
+        if (state.activeTaskId && state.activeTaskId !== t.id) {
+          saveTaskRemaining();
+        }
         state.activeTaskId = t.id;
         if (!state.running) {
           if (state.mode !== "focus") state.mode = "focus";
-          state.secondsLeft = durationFor("focus");
+          const full = durationFor("focus");
+          if (t.remainingSec > 0 && t.remainingSec < full) {
+            state.secondsLeft = t.remainingSec;
+          } else {
+            state.secondsLeft = full;
+            t.remainingSec = 0;
+          }
         }
         save(); renderTasks(); renderTimer();
         showPage("timer");
@@ -698,6 +742,7 @@
         }
       }
       function unselectTask() {
+        saveTaskRemaining();
         state.activeTaskId = null;
         save(); renderTasks(); renderTimer();
         toast("Unselected");
@@ -736,6 +781,7 @@
           const cycle = [0, 15, 25, 45, 50, 90];
           const i = cycle.indexOf(t.focusMin || 0);
           t.focusMin = cycle[(i + 1) % cycle.length];
+          t.remainingSec = 0; // length changed — start fresh next time
           if (t.id === state.activeTaskId && state.mode === "focus" && !state.running) {
             state.secondsLeft = durationFor("focus");
             renderTimer();
@@ -1178,6 +1224,7 @@
       const t = state.tasks.find((x) => x.id === state.activeTaskId);
       if (t) {
         t.pomodoros += 1;
+        t.remainingSec = 0; // finished block — no leftover
         if (t.target > 0 && t.pomodoros >= t.target && !t.done) {
           t.done = true;
           if (state.activeTaskId === t.id) state.activeTaskId = null;
@@ -1406,6 +1453,7 @@
     clearInterval(state.timerId);
     clearTimeout(zenTimer);
     setZen(false);
+    if (wasRunning) saveTaskRemaining();
     renderTimer(); save();
     if (wasRunning) {
       vibrate("pause");
@@ -1422,6 +1470,7 @@
   function switchMode(mode) {
     const go = () => {
       stopTimer();
+      if (state.mode === "focus" && mode !== "focus") clearTaskRemaining();
       state.mode = mode;
       state.secondsLeft = durationFor(mode);
       renderTimer(); save();
@@ -1455,11 +1504,18 @@
       startTimer();
     }
   };
-  $("resetBtn").onclick = () => { stopTimer(); state.secondsLeft = durationFor(state.mode); renderTimer(); save(); };
+  $("resetBtn").onclick = () => {
+    stopTimer();
+    clearTaskRemaining();
+    state.secondsLeft = durationFor(state.mode);
+    renderTimer();
+    save();
+  };
   $("skipBtn").onclick = async () => {
     const go = () => {
       const elapsed = elapsedNow();
       logSession(state.mode, elapsed, false);
+      if (state.mode === "focus") clearTaskRemaining();
       advance(false);
     };
     if (settings.confirmSkip && meaningfullyElapsed()) {
@@ -1507,7 +1563,7 @@
     e.preventDefault();
     const title = $("taskInput").value.trim();
     if (!title) return;
-    const t = { id: uid(), title, done: false, pomodoros: 0, target: 0, due: "today", archived: false };
+    const t = { id: uid(), title, done: false, pomodoros: 0, target: 0, due: "today", archived: false, remainingSec: 0 };
     state.tasks.unshift(t);
     if (!state.activeTaskId) state.activeTaskId = t.id;
     $("taskInput").value = "";
