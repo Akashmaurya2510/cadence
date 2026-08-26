@@ -19,14 +19,23 @@
   <header class="top">
     <div class="wordmark" id="wordmark"><span class="dot"></span>Cadence</div>
     <nav class="desk-nav">
-      <a href="#" data-nav="timer" class="active">Timer</a>
-      <a href="#reports" data-nav="reports">Reports</a>
-      <a href="#log" data-nav="log">Log</a>
+      <a href="#" data-nav="timer" class="active">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg>
+        <span>Timer</span>
+      </a>
+      <a href="#reports" data-nav="reports">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+        <span>Reports</span>
+      </a>
+      <a href="#log" data-nav="log">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/></svg>
+        <span>Log</span>
+      </a>
     </nav>
     <div class="icon-row">
       <div class="header-anchor">
         <button class="icon-btn" id="themeBtn" aria-label="Theme and accent" title="Theme">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18 4 4 0 000-8 2.5 2.5 0 010-5 4 4 0 000-5z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
         </button>
         <div class="theme-panel" id="themePopover" role="dialog" aria-label="Theme and accent">
           <div class="theme-panel-head">
@@ -55,7 +64,7 @@
         </div>
       </div>
       <button class="icon-btn" id="settingsBtn" aria-label="Open settings" title="Settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1 1.56V21a2 2 0 11-4 0v-.09a1.7 1.7 0 00-1-1.56 1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.7 1.7 0 00.34-1.87 1.7 1.7 0 00-1.56-1H3a2 2 0 110-4h.09a1.7 1.7 0 001.56-1 1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06a1.7 1.7 0 001.87.34H9a1.7 1.7 0 001-1.56V3a2 2 0 114 0v.09a1.7 1.7 0 001 1.56 1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l.06.06a1.7 1.7 0 00-.34 1.87V9a1.7 1.7 0 001.56 1H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.56 1z"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
     </div>
   </header>
@@ -123,7 +132,6 @@
       <div class="kicker">Reports</div>
       <h1>Your rhythm</h1>
       <p id="reportLead">Complete a focus session and this page fills in.</p>
-      <div class="banner" id="demoBanner">Sample history is loaded so you can explore the charts. Clear or replace it in Settings.</div>
       <div class="banner nudge" id="exportNudge" hidden>
         <span>It has been a while since you exported a backup.</span>
         <button type="button" class="text-btn" id="nudgeExport">Export now</button>
@@ -178,9 +186,18 @@
 </div>
 
 <nav class="tabbar">
-  <a href="#" data-nav="timer" class="active">Timer</a>
-  <a href="#reports" data-nav="reports">Reports</a>
-  <a href="#log" data-nav="log">Log</a>
+  <a href="#" data-nav="timer" class="active">
+    <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg>
+    <span>Timer</span>
+  </a>
+  <a href="#reports" data-nav="reports">
+    <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+    <span>Reports</span>
+  </a>
+  <a href="#log" data-nav="log">
+    <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/></svg>
+    <span>Log</span>
+  </a>
 </nav>
 
 <div class="backdrop" id="backdrop"></div>
@@ -264,7 +281,6 @@
   <button class="ghost-btn" id="copyBtn" type="button">Copy data to clipboard</button>
   <button class="ghost-btn" id="importBtn" type="button">Import JSON</button>
   <input id="importFile" type="file" accept="application/json" hidden>
-  <button class="ghost-btn" id="demoBtn" type="button">Load sample history</button>
   <button class="ghost-btn danger" id="clearBtn" type="button">Clear all data</button>
   <p class="sub section-label">App</p>
   <button class="ghost-btn" id="shortcutsBtn" type="button">Keyboard shortcuts</button>

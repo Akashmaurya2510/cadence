@@ -276,40 +276,6 @@
       return ((t ^ t >>> 14) >>> 0) / 4294967296;
     };
   }
-  function seed() {
-    const rand = mulberry32(20260825);
-    const tasks = [
-      { id: "t1", title: "Deep work block", done: false, pomodoros: 0, target: 8, due: "today", archived: false },
-      { id: "t2", title: "Write and review", done: false, pomodoros: 0, target: 4, due: "today", archived: false },
-      { id: "t3", title: "Study session", done: true, pomodoros: 0, target: 3, due: "later", archived: false },
-      { id: "t4", title: "Side project", done: false, pomodoros: 0, target: 6, due: "later", archived: true },
-    ];
-    const sessions = [];
-    const now = Date.now();
-    for (let d = 27; d >= 0; d--) {
-      const day = new Date(now - d * 86400000);
-      const weekend = day.getDay() === 0 || day.getDay() === 6;
-      const count = weekend ? Math.floor(rand() * 3) : 3 + Math.floor(rand() * 5);
-      for (let i = 0; i < count; i++) {
-        const started = new Date(day);
-        started.setHours(8 + Math.floor(rand() * 11), Math.floor(rand() * 50), 0, 0);
-        if (started.getTime() > now) continue;
-        const dur = 25 * 60 - Math.floor(rand() * 90);
-        const taskId = rand() < 0.4 ? "t1" : rand() < 0.7 ? "t2" : rand() < 0.85 ? "t3" : undefined;
-        const completed = rand() > 0.08;
-        const note = completed && rand() < 0.18 ? "Kept the block intact." : undefined;
-        sessions.push({
-          id: "s" + d + i, mode: "focus", startedAt: started.getTime(),
-          endedAt: started.getTime() + dur * 1000, durationSec: dur, taskId, completed, note,
-        });
-      }
-    }
-    tasks.forEach((t) => { t.pomodoros = sessions.filter((s) => s.taskId === t.id && s.completed).length; });
-    state.tasks = tasks;
-    state.sessions = sessions;
-    state.demo = true;
-  }
-
   function focusSessions() {
     return state.sessions.filter((s) => s.mode === "focus" && s.completed);
   }
@@ -796,7 +762,7 @@
     $("reportLead").textContent = weekSec === 0
       ? "Complete a focus session and this page fills in."
       : "You focused " + fmtMs(weekSec) + " this week" + (delta == null ? "." : ", " + Math.abs(delta) + "% " + (delta >= 0 ? "above" : "below") + " last week.");
-    $("demoBanner").style.display = state.demo ? "flex" : "none";
+    if ($("demoBanner")) $("demoBanner").style.display = state.demo ? "flex" : "none";
     const stale = state.lastExportAt && (Date.now() - state.lastExportAt > 14 * 86400000);
     const never = !state.lastExportAt && state.sessions.length > 5 && !state.demo;
     $("exportNudge").hidden = !(stale || never);
@@ -1504,7 +1470,6 @@
       toast("Could not import that file — existing data kept");
     }
   };
-  $("demoBtn").onclick = () => { seed(); renderAll(); save(); toast("Sample history loaded"); };
   $("clearBtn").onclick = async () => {
     const ok = await askConfirm({
       title: "Clear all data?",
