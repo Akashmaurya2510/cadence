@@ -1196,3 +1196,120 @@ body.zen .site-footer { opacity: 0; pointer-events: none; }
     max-width: 480px;
   }
 }
+
+
+/* ===== Micro-interactions ===== */
+@keyframes bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+@keyframes ring-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+@keyframes ring-complete {
+  0% { transform: scale(1); filter: brightness(1); }
+  35% { transform: scale(1.04); filter: brightness(1.12); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+@keyframes task-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+@keyframes nav-bump {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+@keyframes switch-bump {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.94); }
+  100% { transform: scale(1); }
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes pageInSoft {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.btn-primary.bump,
+.btn-secondary.bump,
+.icon-btn.bump {
+  animation: bump 0.28s var(--ease);
+}
+.ring-stage.ring-pulse {
+  animation: ring-pulse 0.35s var(--ease);
+}
+.ring-stage.ring-complete {
+  animation: ring-complete 0.45s var(--ease);
+}
+.task.task-pop {
+  animation: task-pop 0.3s var(--ease);
+}
+.tabbar a.nav-bump,
+.desk-nav a.nav-bump {
+  animation: nav-bump 0.28s var(--ease);
+}
+.switch.switch-bump {
+  animation: switch-bump 0.22s var(--ease);
+}
+
+.toast:not([hidden]) {
+  animation: toastIn 0.28s var(--ease);
+}
+
+.page.active {
+  animation: pageInSoft 0.32s var(--ease);
+}
+
+.btn-primary {
+  transition: transform 0.15s var(--ease), box-shadow 0.25s var(--ease), background-color 0.25s var(--ease);
+}
+.btn-primary:active {
+  transform: scale(0.94);
+}
+.tabbar a {
+  transition: color 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.tabbar a:active {
+  transform: scale(0.96);
+}
+.task {
+  transition: border-color 0.2s var(--ease), background-color 0.25s var(--ease),
+    box-shadow 0.25s var(--ease), transform 0.2s var(--ease);
+}
+.task.active {
+  transition: border-color 0.25s var(--ease), background-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+.chip {
+  transition: transform 0.15s var(--ease), background-color 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+.chip:active {
+  transform: scale(0.96);
+}
+.mode-switch button {
+  transition: transform 0.15s var(--ease), background-color 0.25s var(--ease), color 0.25s var(--ease);
+}
+.mode-switch button:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary.bump,
+  .ring-stage.ring-pulse,
+  .ring-stage.ring-complete,
+  .task.task-pop,
+  .tabbar a.nav-bump,
+  .desk-nav a.nav-bump,
+  .switch.switch-bump,
+  .toast:not([hidden]),
+  .page.active {
+    animation: none !important;
+  }
+}

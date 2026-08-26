@@ -392,9 +392,31 @@
       tone(ac, 920, ac.currentTime, 0.03, "square", 0.025);
     } catch (e) { /* ignore */ }
   }
-  function vibrate() {
+  /** Haptic patterns — light taps for UI, stronger for session boundaries */
+  function vibrate(kind) {
     if (!settings.vibrate || !navigator.vibrate) return;
-    try { navigator.vibrate([40, 80, 40]); } catch (e) { /* ignore */ }
+    const patterns = {
+      light: 12,
+      medium: 28,
+      select: 18,
+      start: [20, 30, 20],
+      pause: 24,
+      done: [40, 60, 40],
+      success: [30, 40, 30, 40, 50],
+      warn: [50, 40, 50],
+    };
+    const p = patterns[kind] != null ? patterns[kind] : patterns.done;
+    try { navigator.vibrate(p); } catch (e) { /* ignore */ }
+  }
+  function bump(el, cls) {
+    if (!el) return;
+    el.classList.remove(cls);
+    // reflow so animation can retrigger
+    void el.offsetWidth;
+    el.classList.add(cls);
+    const clear = () => el.classList.remove(cls);
+    el.addEventListener("animationend", clear, { once: true });
+    setTimeout(clear, 500);
   }
   function notify(title, body) {
     if (!settings.notify || typeof Notification === "undefined" || Notification.permission !== "granted") return;
@@ -541,7 +563,10 @@
         save(); renderTasks(); renderTimer();
         showPage("timer");
         if (start && !state.running) startTimer();
-        else if (!start) toast("Selected · " + t.title);
+        else if (!start) {
+          vibrate("select");
+          toast("Selected · " + t.title);
+        }
       }
       function unselectTask() {
         state.activeTaskId = null;
@@ -553,6 +578,8 @@
         t.done = !t.done;
         if (t.done && state.activeTaskId === t.id) state.activeTaskId = null;
         save(); renderTasks();
+        vibrate(t.done ? "medium" : "light");
+        if (t.done) bump(row, "task-pop");
       };
       row.querySelector(".title").onclick = () => selectTask(false);
       row.querySelector(".title").ondblclick = (e) => { e.preventDefault(); startEdit(row, t); };
@@ -991,6 +1018,7 @@
   }
 
   function showPage(name) {
+    const changed = state.page !== name;
     state.page = name;
     if (name !== "timer") setZen(false);
     document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.dataset.page === name));
@@ -998,6 +1026,10 @@
     if (name === "reports") renderReports();
     if (name === "log") { renderLogFilters(); renderLog(); }
     try { location.hash = name === "timer" ? "" : name; } catch (e) { /* ignore */ }
+    if (changed) {
+      vibrate("light");
+      document.querySelectorAll('[data-nav="' + name + '"]').forEach((a) => bump(a, "nav-bump"));
+    }
   }
 
   function logSession(mode, elapsed, completed) {
@@ -1020,7 +1052,7 @@
         if (t.target > 0 && t.pomodoros >= t.target && !t.done) {
           t.done = true;
           if (state.activeTaskId === t.id) state.activeTaskId = null;
-          setTimeout(() => toast("Target hit · " + t.title + " marked done"), 400);
+          setTimeout(() => { vibrate("success"); toast("Target hit · " + t.title + " marked done"); }, 400);
         }
       }
     }
@@ -1072,7 +1104,7 @@
       fire = true;
     }
     localStorage.setItem(CELEBRATE_KEY, JSON.stringify(celebrated));
-    if (fire) burstConfetti();
+    if (fire) { vibrate("success"); burstConfetti(); }
   }
 
   function completePhase() {
@@ -1081,7 +1113,8 @@
     const wasFocus = state.mode === "focus";
     const entry = logSession(state.mode, durationFor(state.mode), true);
     playSound();
-    vibrate();
+    vibrate("done");
+    bump($("ringStage"), "ring-complete");
     notify(MODE_LABEL[state.mode] + " complete", "Up next: " + MODE_LABEL[nextModeAfter(state.mode, state.focusCount)]);
     if (wasFocus) celebrateIfNeeded(prevStreak, prevToday);
     if (wasFocus && entry) {
@@ -1117,14 +1150,22 @@
     renderTimer();
     scheduleZen();
     save();
+    vibrate("start");
+    bump($("playBtn"), "bump");
+    bump($("ringStage"), "ring-pulse");
   }
   function stopTimer() {
+    const wasRunning = state.running;
     if (state.running && state.endsAt) state.secondsLeft = Math.max(0, Math.ceil((state.endsAt - Date.now()) / 1000));
     state.running = false; state.endsAt = null;
     clearInterval(state.timerId);
     clearTimeout(zenTimer);
     setZen(false);
     renderTimer(); save();
+    if (wasRunning) {
+      vibrate("pause");
+      bump($("playBtn"), "bump");
+    }
   }
 
   function elapsedNow() {
@@ -1302,6 +1343,8 @@
       settings[key] = !settings[key];
       el.classList.toggle("on", settings[key]);
       el.setAttribute("aria-checked", settings[key] ? "true" : "false");
+      vibrate("light");
+      bump(el, "switch-bump");
       save();
     };
   }
@@ -1331,6 +1374,8 @@
       settings[key] = !settings[key];
       el.classList.toggle("on", settings[key]);
       el.setAttribute("aria-checked", settings[key] ? "true" : "false");
+      vibrate("light");
+      bump(el, "switch-bump");
       if (onChange) onChange();
       save();
     };
