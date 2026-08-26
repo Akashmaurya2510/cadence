@@ -8,7 +8,7 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "2.6.0";
+  const APP_VERSION = "2.6.1";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
     {
@@ -1248,16 +1248,17 @@
     }
   }
 
-  function logSession(mode, elapsed, completed) {
+  function logSession(mode, elapsed, completed, tsOverride) {
     if (elapsed < 15 && !completed) return null;
     if (state.demo && completed && mode === "focus") {
       state.sessions = [];
       state.demo = false;
       toast("Sample history cleared — your real sessions start now");
     }
-    const now = Date.now();
+    const endedAt = tsOverride ? tsOverride.endedAt : Date.now();
+    const startedAt = tsOverride ? tsOverride.startedAt : endedAt - elapsed * 1000;
     const entry = {
-      id: uid(), mode, startedAt: now - elapsed * 1000, endedAt: now,
+      id: uid(), mode, startedAt, endedAt: endedAt,
       durationSec: elapsed, taskId: mode === "focus" ? state.activeTaskId : undefined, completed,
     };
     state.sessions.push(entry);
@@ -1439,6 +1440,15 @@
     }
     localStorage.setItem(CELEBRATE_KEY, JSON.stringify(celebrated));
     if (fire) { vibrate("success"); burstConfetti(); }
+  }
+
+  function completeAwayPhase(endsAt) {
+    const wasFocus = state.mode === "focus";
+    const durationSec = durationFor(state.mode);
+    const startedAt = endsAt - durationSec * 1000;
+    logSession(state.mode, durationSec, true, { startedAt, endedAt: endsAt });
+    advance(false);
+    toast((wasFocus ? "Focus" : "Break") + " session logged — it finished while you were away");
   }
 
   function completePhase() {
@@ -2373,11 +2383,11 @@
     if (!wasRunning || !endsAt) return;
     const rem = Math.ceil((endsAt - Date.now()) / 1000);
     if (rem <= 0) {
-      // Timer finished while away — complete the phase
+      // Timer finished while away — log it with the real start/end times, not now
       state.running = false;
       state.endsAt = null;
       state.secondsLeft = 0;
-      try { completePhase(); } catch (e) { state.secondsLeft = durationFor(state.mode); save(); }
+      try { completeAwayPhase(endsAt); } catch (e) { state.secondsLeft = durationFor(state.mode); save(); }
       return;
     }
     state.endsAt = endsAt;

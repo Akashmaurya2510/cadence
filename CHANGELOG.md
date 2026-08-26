@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.6.1 — August 2026
+
+- **Fix** A session that finished while the app was closed (e.g. started at night, reopened next morning) was logged with the reopen time instead of when it actually happened. Now logged with the real start/end times, quietly, with no sound or notification firing after the fact.
+
 ## 2.6.0 — August 2026
 
 - **New** Badges on Reports: 7/30/100-day streaks, 10/50/100 hours focused — a fixed set, no open-ended achievement grind.
