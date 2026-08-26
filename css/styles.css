@@ -1353,26 +1353,25 @@ body.compact .page-head { margin-bottom: var(--space-4); }
 }
 
 
-/* Mute toggle in controls */
+/* Mute toggle — tick only; completion tone stays in Settings */
 .mute-btn {
   position: relative;
+  transition: color 0.2s var(--ease), background-color 0.2s var(--ease), border-color 0.2s var(--ease), opacity 0.2s var(--ease);
+}
+.mute-btn svg {
+  width: 18px;
+  height: 18px;
 }
 .mute-btn.is-muted {
   color: var(--text-dim);
-  border-color: var(--border);
+  background: var(--surface-2);
+  border-color: var(--text-dim);
+  opacity: 0.85;
 }
-.mute-btn.is-muted::after {
-  content: "";
-  position: absolute;
-  width: 2px;
-  height: 18px;
-  background: currentColor;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) rotate(45deg);
-  border-radius: 1px;
-  pointer-events: none;
+
+.mute-btn.is-muted {
+  color: var(--text-dim) !important;
+  background: var(--surface-2) !important;
+  opacity: 0.9;
 }
-body.zen {
-  /* ensure filter stacking doesn't break fixed tabbar (already hidden) */
-}
+.mute-btn svg { width: 18px; height: 18px; }

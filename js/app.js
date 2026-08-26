@@ -8,17 +8,27 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", moss: "#121a16", dusk: "#17151f", oled: "#000000" };
 
-  const APP_VERSION = "2.4.7";
+  const APP_VERSION = "2.4.8";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "2.4.8",
+      date: "August 2026",
+      title: "Cadence 2.4.8",
+      blurb: "Tick mute button fixed; completion tone stays on Settings.",
+      items: [
+        { tag: "Fix", text: "Speaker button toggles and shows muted state; only mutes the tick." },
+        { tag: "Polish", text: "Completion tone is controlled only by Settings → Sound." },
+      ],
+    },
     {
       version: "2.4.7",
       date: "August 2026",
       title: "Cadence 2.4.7",
-      blurb: "Monochrome zen and a one-tap mute for tick and sounds.",
+      blurb: "Monochrome zen and a one-tap mute for the tick.",
       items: [
         { tag: "New", text: "Zen mode goes monochrome so the ring stays calm and distraction-free." },
-        { tag: "New", text: "Speaker button on the timer row mutes tick and completion sounds." },
+        { tag: "New", text: "Speaker button on the timer row mutes the tick sound." },
       ],
     },
     {
@@ -384,7 +394,7 @@
     o.start(start); o.stop(start + dur + 0.02);
   }
   function playSound(choice) {
-    if (settings.muted || !settings.sound) return;
+    if (!settings.sound) return;
     try {
       const ac = ctx();
       const t0 = ac.currentTime;
@@ -414,8 +424,9 @@
     if (!btn || !icon) return;
     const muted = !!settings.muted;
     btn.classList.toggle("is-muted", muted);
-    btn.setAttribute("aria-label", muted ? "Unmute sounds" : "Mute tick and sounds");
-    btn.title = muted ? "Unmute" : "Mute";
+    btn.setAttribute("aria-pressed", muted ? "true" : "false");
+    btn.setAttribute("aria-label", muted ? "Unmute tick sound" : "Mute tick sound");
+    btn.title = muted ? "Tick muted — tap to unmute" : "Mute tick";
     icon.innerHTML = muted
       ? '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" x2="16" y1="9" y2="15"/><line x1="16" x2="22" y1="9" y2="15"/>'
       : '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>';
@@ -1243,6 +1254,18 @@
     } else go();
   }
 
+  if ($("muteBtn")) {
+    $("muteBtn").onclick = function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      settings.muted = !settings.muted;
+      save();
+      renderMuteBtn();
+      vibrate("light");
+      bump($("muteBtn"), "bump");
+      toast(settings.muted ? "Tick muted" : "Tick on");
+    };
+  }
   $("playBtn").onclick = () => state.running ? stopTimer() : startTimer();
   $("resetBtn").onclick = () => { stopTimer(); state.secondsLeft = durationFor(state.mode); renderTimer(); save(); };
   $("skipBtn").onclick = async () => {
@@ -1644,6 +1667,7 @@
 
   function renderAll() {
     applyTheme();
+    renderMuteBtn();
     refreshAllSteppers();
     $("switchAuto").classList.toggle("on", settings.autoStart);
     $("switchSound").classList.toggle("on", settings.sound);
