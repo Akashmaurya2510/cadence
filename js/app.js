@@ -8,9 +8,20 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "2.5.1";
+  const APP_VERSION = "2.5.2";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "2.5.2",
+      date: "August 2026",
+      title: "Cadence 2.5.2",
+      blurb: "Louder tones, tick volume, simpler What's new, clearer tour and zen taps.",
+      items: [
+        { tag: "Fix", text: "Completion and tick sounds are much louder; tick has its own volume." },
+        { tag: "Polish", text: "What's new is a single Okay — no more scrolling for Later." },
+        { tag: "Polish", text: "Zen: tap clock to toggle controls; tap background to exit zen (timer keeps going)." },
+      ],
+    },
     {
       version: "2.5.1",
       date: "August 2026",
@@ -135,7 +146,7 @@
     focus: 25, short: 5, long: 15, interval: 4,
     dailyGoal: 8, weeklyGoal: 40, monthlyGoal: 160,
     autoStart: false, sound: true, notify: false, tickSound: false,
-    vibrate: true, soundChoice: "chime", volume: 2, themeAuto: false,
+    vibrate: true, soundChoice: "chime", volume: 2, tickVolume: 2, themeAuto: false,
     accent: "default", compact: false, confirmSkip: true, muted: false,
   };
   const ACCENTS = {
@@ -289,6 +300,7 @@
       state._restoreEndsAt = typeof d.endsAt === "number" ? d.endsAt : null;
       state._restoreRunning = !!d.running && !!d.endsAt;
       if (settings.volume == null) settings.volume = 2;
+      if (settings.tickVolume == null) settings.tickVolume = 2;
       if (settings.themeAuto == null) settings.themeAuto = false;
       if (!settings.accent) settings.accent = "default";
       if (settings.compact == null) settings.compact = false;
@@ -414,15 +426,20 @@
     return audioCtx;
   }
   function volScale() {
+    // Higher multipliers so Loud is actually audible on phones
     const v = settings.volume || 2;
-    return v === 1 ? 0.45 : v === 3 ? 1.35 : 1;
+    return v === 1 ? 0.7 : v === 3 ? 2.4 : 1.5;
+  }
+  function tickVolScale() {
+    const v = settings.tickVolume || 2;
+    return v === 1 ? 0.5 : v === 3 ? 1.8 : 1.0;
   }
   function tone(ac, freq, start, dur, type, gain) {
     const o = ac.createOscillator(), g = ac.createGain();
     o.type = type || "sine"; o.frequency.value = freq;
-    const scaled = gain * volScale();
-    g.gain.setValueAtTime(0, start);
-    g.gain.linearRampToValueAtTime(scaled, start + 0.02);
+    const scaled = Math.min(0.95, gain * volScale());
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.linearRampToValueAtTime(scaled, start + 0.015);
     g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
     o.connect(g); g.connect(ac.destination);
     o.start(start); o.stop(start + dur + 0.02);
@@ -434,20 +451,21 @@
       const t0 = ac.currentTime;
       const kind = choice || settings.soundChoice || "chime";
       if (kind === "bell") {
-        tone(ac, 523, t0, 0.55, "sine", 0.14);
-        tone(ac, 784, t0 + 0.08, 0.7, "sine", 0.1);
-        tone(ac, 1046, t0 + 0.18, 0.9, "sine", 0.08);
+        tone(ac, 523, t0, 0.55, "sine", 0.42);
+        tone(ac, 784, t0 + 0.08, 0.7, "sine", 0.32);
+        tone(ac, 1046, t0 + 0.18, 0.9, "sine", 0.26);
       } else if (kind === "wood") {
         const o = ac.createOscillator(), g = ac.createGain();
         o.type = "triangle"; o.frequency.setValueAtTime(180, t0);
         o.frequency.exponentialRampToValueAtTime(60, t0 + 0.12);
-        g.gain.setValueAtTime(0.22, t0);
+        const wv = 0.55 * volScale();
+        g.gain.setValueAtTime(wv, t0);
         g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
         o.connect(g); g.connect(ac.destination);
         o.start(t0); o.stop(t0 + 0.16);
-        tone(ac, 140, t0 + 0.16, 0.1, "triangle", 0.12);
+        tone(ac, 140, t0 + 0.16, 0.1, "triangle", 0.35);
       } else {
-        [0, 0.16, 0.32].forEach((t, i) => tone(ac, i === 2 ? 880 : 660, t0 + t, 0.14, "sine", 0.16));
+        [0, 0.16, 0.32].forEach((t, i) => tone(ac, i === 2 ? 880 : 660, t0 + t, 0.16, "sine", 0.45));
       }
     } catch (e) { /* ignore */ }
   }
@@ -471,7 +489,16 @@
     if (document.visibilityState === "hidden") return;
     try {
       const ac = ctx();
-      tone(ac, 920, ac.currentTime, 0.03, "square", 0.025);
+      const t0 = ac.currentTime;
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = "square";
+      o.frequency.value = 880;
+      const peak = Math.min(0.55, 0.22 * tickVolScale());
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(peak, t0 + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.045);
+      o.connect(g); g.connect(ac.destination);
+      o.start(t0); o.stop(t0 + 0.05);
     } catch (e) { /* ignore */ }
   }
   /** Haptic patterns — light taps for UI, stronger for session boundaries */
@@ -1330,14 +1357,12 @@
     b.onclick = () => switchMode(b.dataset.mode);
   });
   $("ringStage").onclick = (e) => {
-    // Mute lives on the ring — ignore those clicks here
     if (e.target.closest && e.target.closest("#muteBtn")) return;
     if (!state.running) return;
     if (state.zen) {
-      // Tap timer in zen → show controls
-      setZenControls(true);
+      // Tap clock in zen → toggle controls (does not pause)
+      setZenControls(!state.zenShowControls);
     } else {
-      // Enter zen pure (timer only)
       setZen(true, false);
     }
   };
@@ -1345,17 +1370,17 @@
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       if (!state.running) return;
-      if (state.zen) setZenControls(true);
+      if (state.zen) setZenControls(!state.zenShowControls);
       else setZen(true, false);
     }
   };
 
-  // Tap outside the clock in zen → hide controls (timer only)
+  // Tap background in zen → leave zen, timer keeps running
   document.addEventListener("click", (e) => {
-    if (!state.zen || !state.zenShowControls) return;
+    if (!state.zen) return;
     const t = e.target;
-    if (t.closest && (t.closest(".ring-stage") || t.closest(".controls") || t.closest(".modal") || t.closest(".settings-sheet") || t.closest("#muteBtn"))) return;
-    setZenControls(false);
+    if (t.closest && (t.closest(".ring-stage") || t.closest(".controls") || t.closest(".modal") || t.closest(".settings-sheet") || t.closest("#drawer") || t.closest("#muteBtn"))) return;
+    setZen(false); // exit zen only — do not pause
   });
 
   $("taskForm").onsubmit = (e) => {
@@ -1437,7 +1462,7 @@
   function refreshStepper(el) {
     const key = el.dataset.key, min = +el.dataset.min, max = +el.dataset.max, suffix = el.dataset.suffix;
     const v = settings[key];
-    if (key === "volume") $(el.dataset.val).textContent = VOLUME_LABEL[v] || "Normal";
+    if (key === "volume" || key === "tickVolume") $(el.dataset.val).textContent = VOLUME_LABEL[v] || "Normal";
     else $(el.dataset.val).textContent = v + " " + suffix;
     el.querySelector(".step-fill").style.width = (((v - min) / (max - min)) * 100) + "%";
     el.querySelectorAll(".step-btn").forEach((b) => {
@@ -1909,22 +1934,11 @@
   }
 
   const tourSteps = [
-    {
-      title: "A calmer way to focus",
-      text: "Cadence runs 25-minute focus sessions with short and long breaks in between. Tap the center button to start — the ring fills in as time passes.",
-    },
-    {
-      title: "Make it yours",
-      text: "Switch Focus, Short Break, or Long Break anytime with the pill at the top, or tap the palette icon for five color themes, including a true-black OLED option.",
-    },
-    {
-      title: "Track what you're working on",
-      text: "Add tasks below the timer, mark one active, set a today/later split, and give each a pomodoro target. Completed focus sessions log against the active task.",
-    },
-    {
-      title: "See your rhythm",
-      text: "Reports and Log show your streak, weekly trends, and full session history. Press ? anytime for keyboard shortcuts — T jumps to the task field.",
-    },
+    { title: "Start here", text: "Press play under the ring. Focus, short break, long break — that is the whole cycle." },
+    { title: "Tasks (optional)", text: "Type what you are working on below the timer. Tap a task to select it before you start." },
+    { title: "While you focus", text: "Chrome tucks away so you can stay with the ring. Tap the clock for controls, or the background to leave zen. Pause only with the pause button." },
+    { title: "Reports & Log", text: "Use the bottom tabs for your week, heatmap, and session history." },
+    { title: "Make it yours", text: "Theme and accent at the top. Durations, sounds, and backup are in Settings." },
   ];
   let tourIndex = 0;
   let tourReplay = false;
@@ -1995,8 +2009,7 @@
     $("changelogModal").classList.remove("open");
   }
   $("changeOk").onclick = dismissChangelog;
-  $("changeLater").onclick = () => $("changelogModal").classList.remove("open");
-  if ($("changeCloseX")) $("changeCloseX").onclick = () => $("changelogModal").classList.remove("open");
+  if ($("changeCloseX")) $("changeCloseX").onclick = dismissChangelog;
   $("whatsNewBtn").onclick = () => { shutDrawer(); openChangelog(true); };
   if ($("footerUpdated")) {
     $("footerUpdated").onclick = () => openChangelog(true);

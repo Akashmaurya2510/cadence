@@ -1423,3 +1423,30 @@ body.zen.zen-controls .controls {
   display: flex;
   margin-top: var(--space-5);
 }
+
+
+/* What's new: button always visible */
+.changelog-box {
+  display: flex;
+  flex-direction: column;
+  max-height: min(88dvh, 640px);
+}
+.changelog-box .change-list {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  max-height: min(50dvh, 360px);
+  margin-bottom: 8px;
+}
+.changelog-actions {
+  position: sticky;
+  bottom: 0;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.changelog-actions .drawer-close {
+  width: 100%;
+  flex: none;
+}

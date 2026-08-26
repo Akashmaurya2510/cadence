@@ -97,7 +97,7 @@
         <svg id="muteIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
       </button>
     </div>
-    <p class="zen-hint" id="zenHint">Tap the timer to show controls · tap outside to hide</p>
+    <p class="zen-hint" id="zenHint">Tap the clock for controls · tap outside to leave zen</p>
     <div class="break-suggest" id="breakSuggest" hidden>
       <span class="break-label">Break idea</span>
       <span id="breakText"></span>
@@ -266,13 +266,19 @@
       <button type="button" class="chip" data-sound="wood">Wood</button>
     </div>
   </div>
-  <div class="field"><label>Sound volume <span class="val" id="vVolume">Normal</span></label>
+  <div class="field"><label>Completion volume <span class="val" id="vVolume">Normal</span></label>
     <div class="stepper" data-key="volume" data-min="1" data-max="3" data-step="1" data-suffix="" data-val="vVolume">
       <button type="button" class="step-btn" data-dir="-1" aria-label="Quieter">−</button>
       <div class="step-bar"><div class="step-fill"></div></div>
       <button type="button" class="step-btn" data-dir="1" aria-label="Louder">+</button>
     </div></div>
   <div class="toggle-row"><span>Tick while focusing</span><div class="switch" id="switchTick" role="switch" aria-checked="false"></div></div>
+  <div class="field"><label>Tick volume <span class="val" id="vTickVolume">Normal</span></label>
+    <div class="stepper" data-key="tickVolume" data-min="1" data-max="3" data-step="1" data-suffix="" data-val="vTickVolume">
+      <button type="button" class="step-btn" data-dir="-1" aria-label="Quieter tick">−</button>
+      <div class="step-bar"><div class="step-fill"></div></div>
+      <button type="button" class="step-btn" data-dir="1" aria-label="Louder tick">+</button>
+    </div></div>
   <div class="toggle-row"><span>Follow system theme</span><div class="switch" id="switchThemeAuto" role="switch" aria-checked="false"></div></div>
   <div class="toggle-row"><span>Compact layout</span><div class="switch" id="switchCompact" role="switch" aria-checked="false"></div></div>
   <div class="toggle-row"><span>Confirm before skip</span><div class="switch on" id="switchConfirmSkip" role="switch" aria-checked="true"></div></div>
@@ -367,9 +373,8 @@
     <h3 id="changeTitle">What's new</h3>
     <p id="changeBlurb"></p>
     <div id="changeList" class="change-list"></div>
-    <div class="tour-actions">
-      <button class="ghost-btn" id="changeLater" type="button">Later</button>
-      <button class="drawer-close" id="changeOk" type="button">Got it</button>
+    <div class="tour-actions changelog-actions">
+      <button class="drawer-close" id="changeOk" type="button">Okay</button>
     </div>
   </div>
 </div>
