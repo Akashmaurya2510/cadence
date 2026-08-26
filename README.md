@@ -2,32 +2,43 @@
 
 A calm pomodoro timer you can host from a phone, a laptop, or any static server.
 
-Vanilla HTML, CSS, and JavaScript. No build step, no accounts, nothing uploaded.
+Vanilla HTML, CSS, and JavaScript. **No build step**, no accounts, nothing uploaded. All data stays in the browser (`localStorage`).
 
 ## Features
 
-- Focus / short break / long break ring timer, with an “up next” preview and estimated end time
+### Timer
+- Focus / short break / long break ring with “up next” and estimated end time
 - Live tab title while the timer runs
-- Active task shown on the ring; custom focus length per task (15 / 25 / 45 / 50 / 90)
-- Tap a task to select it; **Start focus** runs the timer; auto-strike when target is met
-- Zen mode while a focus session is running — tap the timer to bring chrome back
-- Five themes + **Auto** (follows system light/dark): Graphite, Linen, Moss, Dusk, **OLED**
+- Timer **survives refresh and app close** (resumes from `endsAt`)
+- **Zen mode** while focusing: chrome hidden, scroll locked, timer centered — tap the ring to exit
+- Active task label on the ring; custom focus length per task (15 / 25 / 45 / 50 / 90)
 - Break suggestions on short/long breaks
-- Daily review prompt when you hit your daily goal
-- Daily, weekly, and monthly goals
-- Tasks: edit, reorder, today/later, pause, pomodoro targets, undo delete
-- Optional session notes after a completed focus block
-- Reports: weekly bars, heatmap, hourly focus, time-by-task, longest streak, completion rate
-- Click a heatmap cell or week bar to open that day in the Log
-- Heatmap weekday labels; cleaner mobile hour chart
-- Session log with search, task filter, Today / This week chips, and pagination
-- Sound (chime / bell / wood), volume, optional tick, vibration, notifications
-- Export JSON / CSV, copy JSON to clipboard, import with validation, report PNG
-- Installable PWA with offline cache (system fonts keep it sharp offline)
-- Keyboard shortcuts (`?` to view, `T` to add a task)
-- Changelog popup when you ship a new version
+- Haptics and light micro-interactions on start, pause, complete, and key UI actions
 
-All data stays in the browser (`localStorage`). Nothing is uploaded.
+### Tasks
+- Tap to select · tap again to unselect · **Start focus** to run the timer
+- Auto-strike when a pomodoro target is met (manual complete still works)
+- Edit, reorder, today/later, pause, undo delete
+
+### Look & feel
+- Themes: Graphite, Linen, Moss, Dusk, OLED + **System** (follows light/dark)
+- Independent **accent** colors (amber, coral, mint, violet, rose, sky)
+- Lucide-style icons on the tab bar and header
+- Compact layout toggle; optional confirm-before-skip
+
+### Reports & log
+- Daily / weekly / monthly goals and mini stats under the timer
+- Weekly bars, heatmap (weekday labels), hourly focus, time-by-task
+- Click heatmap or week bar → that day in the Log
+- Session log with search, task filter, Today / This week, pagination
+- Optional note after a completed focus block
+- Daily review prompt when you hit your goal
+
+### Data & PWA
+- Export JSON / sessions CSV / tasks CSV · copy JSON · import with validation · report PNG
+- Installable PWA with offline cache; network-first shell so refreshes pick up new builds
+- Keyboard shortcuts (`?` or Settings → Keyboard shortcuts)
+- Footer: **Built with ❤️ by Akash Maurya** · last updated opens What’s new
 
 ## Run on Termux
 
@@ -40,7 +51,7 @@ python -m http.server 8080
 
 Open `http://127.0.0.1:8080` in your phone browser.
 
-If Python is missing:
+Alternative:
 
 ```bash
 pkg install nodejs-lts
@@ -49,17 +60,9 @@ npx --yes serve -l 8080
 
 ## Host it
 
-Copy this folder to any static host:
+Copy this folder to any static host (GitHub Pages, Netlify Drop, Cloudflare Pages, nginx, etc.). No build step — `index.html` is the app.
 
-- GitHub Pages
-- Netlify Drop
-- Cloudflare Pages
-- nginx / caddy / apache
-- A VPS: `python -m http.server 80` or `npx serve`
-
-No build step. `index.html` is the app.
-
-For GitHub Pages, enable Pages on the branch that contains `index.html` at the repo root (or `/docs`).
+For GitHub Pages, enable Pages on the branch that has `index.html` at the repo root.
 
 ## Shortcuts
 
@@ -72,25 +75,28 @@ For GitHub Pages, enable Pages on the branch that contains `index.html` at the r
 | T | Focus the task input |
 | , | Settings |
 | ? | Shortcut list |
-| Esc | Close drawer / modal |
+| Esc | Close settings / modal |
 
 ## Backup
 
-Settings → **Export report JSON** or **Copy data to clipboard**. Keep that file. Import it later on another device.
+Settings → **Export report JSON**, **Export sessions CSV**, **Export tasks CSV**, or **Copy data to clipboard**. Import JSON to restore. Cadence nudges you if you have history and have not exported in a while.
 
-Cadence will nudge you if it has been a couple of weeks since the last export.
+## Shipping a new version
 
-## Changelog popup
+1. Bump `APP_VERSION` in `js/app.js`
+2. Add an entry at the top of the in-app `CHANGELOG` array
+3. Bump the cache name in `sw.js` (e.g. `cadence-v2.4.6`)
+4. Update the footer date in `index.html` if you want
 
-When you ship a new version, add an entry at the top of `CHANGELOG` in `js/app.js` and bump `APP_VERSION`. Returning visitors see a “what’s new” popup once. First-time visitors get the welcome tour instead.
+Returning visitors see What’s new once. First-time visitors get the welcome tour.
 
 ```js
-const APP_VERSION = "2.1.0";
+const APP_VERSION = "2.4.6";
 const CHANGELOG = [
   {
-    version: "2.1.0",
-    date: "September 2026",
-    title: "Cadence 2.1",
+    version: "2.4.6",
+    date: "August 2026",
+    title: "Cadence 2.4.6",
     blurb: "A short line about this release.",
     items: [
       { tag: "New", text: "The thing you added." },
@@ -100,8 +106,6 @@ const CHANGELOG = [
   // keep older versions below
 ];
 ```
-
-Replay the tour or the changelog anytime from Settings.
 
 ## Files
 
@@ -117,4 +121,6 @@ icons/icon-512.png
 icons/icon-192-maskable.png
 icons/icon-512-maskable.png
 icons/apple-touch-icon.png
+CHANGELOG.md
+README.md
 ```

@@ -8,9 +8,21 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", moss: "#121a16", dusk: "#17151f", oled: "#000000" };
 
-  const APP_VERSION = "2.4.0";
+  const APP_VERSION = "2.4.6";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "2.4.6",
+      date: "August 2026",
+      title: "Cadence 2.4.6",
+      blurb: "Zen focus that does not scroll away, haptics, Lucide icons, and docs that match the app.",
+      items: [
+        { tag: "Polish", text: "Zen mode locks scroll and removes chrome from layout so the timer stays centered." },
+        { tag: "New", text: "Haptics and micro-interactions on start, pause, complete, select, and tabs." },
+        { tag: "Polish", text: "Lucide-style tab and header icons; sample history loader removed." },
+        { tag: "Fix", text: "Running timer survives refresh; task tap selects and unselects cleanly." },
+      ],
+    },
     {
       version: "2.4.0",
       date: "August 2026",
@@ -19,8 +31,8 @@
       items: [
         { tag: "New", text: "Settings open as a full-screen sheet instead of a side drawer." },
         { tag: "New", text: "Site footer with last-updated → What's new; changelog close (X)." },
-        { tag: "Fix", text: "Tapping a task always selects it (no accidental unselect)." },
-        { tag: "Fix", text: "Shortcuts live in Settings; PWA refresh picks up new builds." },
+        { tag: "Fix", text: "Task select/unselect; shortcuts in Settings; PWA refresh picks up new builds." },
+        { tag: "Fix", text: "Running timer persists across refresh and app close." },
       ],
     },
     {
