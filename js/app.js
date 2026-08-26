@@ -8,9 +8,19 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "2.5.3";
+  const APP_VERSION = "2.5.4";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "2.5.4",
+      date: "August 2026",
+      title: "Cadence 2.5.4",
+      blurb: "Fullscreen on play/ring gesture; zen hint fades after a few seconds.",
+      items: [
+        { tag: "Fix", text: "Fullscreen requests on Start and ring tap so Android can hide system bars." },
+        { tag: "Polish", text: "Zen tip shows briefly, then hides." },
+      ],
+    },
     {
       version: "2.5.3",
       date: "August 2026",
@@ -1209,21 +1219,52 @@
     zenShiftTimer = setInterval(applyZenPixelShift, 60000);
   }
 
+  let zenHintTimer = null;
+
+  function isFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+  }
+
   function enterImmersive() {
+    // Must run in a user-gesture stack on mobile Chrome
     try {
+      if (isFullscreen()) return Promise.resolve();
       const root = document.documentElement;
-      if (!document.fullscreenElement && root.requestFullscreen) {
-        root.requestFullscreen().catch(function () { /* needs gesture on some browsers */ });
+      const opts = { navigationUI: "hide" };
+      if (root.requestFullscreen) {
+        return root.requestFullscreen(opts).catch(function () {
+          return root.requestFullscreen().catch(function () { /* blocked */ });
+        });
+      }
+      if (root.webkitRequestFullscreen) {
+        root.webkitRequestFullscreen();
+        return Promise.resolve();
+      }
+      if (root.msRequestFullscreen) {
+        root.msRequestFullscreen();
+        return Promise.resolve();
       }
     } catch (e) { /* ignore */ }
+    return Promise.resolve();
   }
 
   function exitImmersive() {
     try {
-      if (document.fullscreenElement && document.exitFullscreen) {
-        document.exitFullscreen().catch(function () { /* ignore */ });
-      }
+      if (!isFullscreen()) return;
+      if (document.exitFullscreen) document.exitFullscreen().catch(function () {});
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (document.msExitFullscreen) document.msExitFullscreen();
     } catch (e) { /* ignore */ }
+  }
+
+  function showZenHintBriefly() {
+    const h = $("zenHint");
+    if (!h) return;
+    h.classList.add("zen-hint-visible");
+    clearTimeout(zenHintTimer);
+    zenHintTimer = setTimeout(function () {
+      h.classList.remove("zen-hint-visible");
+    }, 5000);
   }
 
   function setZen(on, showControls) {
@@ -1239,13 +1280,18 @@
       document.body.style.overflow = "hidden";
       document.documentElement.style.overflow = "hidden";
       if (!wasZen) {
+        // Fullscreen only succeeds with a user gesture; callers also invoke enterImmersive()
         enterImmersive();
         startZenPixelShift();
+        showZenHintBriefly();
       }
     } else {
       document.body.style.overflow = "";
       document.documentElement.style.overflow = "";
       clearZenShift();
+      clearTimeout(zenHintTimer);
+      const h = $("zenHint");
+      if (h) h.classList.remove("zen-hint-visible");
       if (wasZen) exitImmersive();
     }
   }
@@ -1401,7 +1447,14 @@
       toast(settings.muted ? "Tick muted" : "Tick on");
     };
   }
-  $("playBtn").onclick = () => state.running ? stopTimer() : startTimer();
+  $("playBtn").onclick = () => {
+    if (state.running) stopTimer();
+    else {
+      // User gesture — required for fullscreen on Android Chrome
+      enterImmersive();
+      startTimer();
+    }
+  };
   $("resetBtn").onclick = () => { stopTimer(); state.secondsLeft = durationFor(state.mode); renderTimer(); save(); };
   $("skipBtn").onclick = async () => {
     const go = () => {
@@ -1424,8 +1477,9 @@
   $("ringStage").onclick = (e) => {
     if (e.target.closest && e.target.closest("#muteBtn")) return;
     if (!state.running) return;
+    // Always try fullscreen on ring tap (user gesture)
+    enterImmersive();
     if (state.zen) {
-      // Tap clock in zen → toggle controls (does not pause)
       setZenControls(!state.zenShowControls);
     } else {
       setZen(true, false);
@@ -1435,6 +1489,7 @@
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       if (!state.running) return;
+      enterImmersive();
       if (state.zen) setZenControls(!state.zenShowControls);
       else setZen(true, false);
     }

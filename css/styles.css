@@ -1420,11 +1420,20 @@ body.zen:not(.zen-controls) .pips,
 body.zen:not(.zen-controls) .break-suggest {
   display: none !important;
 }
-body.zen:not(.zen-controls) .zen-hint {
+body.zen .zen-hint {
   display: block;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s ease;
+}
+body.zen .zen-hint.zen-hint-visible {
+  opacity: 0.85;
 }
 body.zen.zen-controls .zen-hint {
-  display: none;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  body.zen .zen-hint { transition: none; }
 }
 body.zen.zen-controls .controls {
   display: flex;
