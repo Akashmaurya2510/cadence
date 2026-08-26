@@ -1062,7 +1062,24 @@
   function setZen(on) {
     state.zen = !!on;
     document.body.classList.toggle("zen", state.zen);
+    document.documentElement.classList.toggle("zen-lock", state.zen);
+    // Prevent background scroll while focused
+    if (state.zen) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    }
   }
+  // Block page scroll in zen mode (empty space no longer scrolls away)
+  document.addEventListener("touchmove", (e) => {
+    if (!state.zen) return;
+    const t = e.target;
+    if (t.closest && (t.closest(".controls") || t.closest(".ring-stage") || t.closest(".modal") || t.closest(".settings-sheet"))) return;
+    e.preventDefault();
+  }, { passive: false });
+
 
   let zenTimer = null;
   function scheduleZen() {

@@ -796,17 +796,54 @@ footer.hint { margin-top: auto; padding-top: var(--space-6); font-size: 12px; co
   pointer-events: none; z-index: 45;
 }
 
+/* Zen / focus mode: no scroll, chrome fully removed from layout (not just invisible) */
+html.zen-lock,
+body.zen {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  height: 100%;
+  height: 100dvh;
+  touch-action: manipulation;
+}
 body.zen .top,
-body.zen .tab-row,
+body.zen .mode-row,
+body.zen .today-line,
+body.zen .mini-stats,
 body.zen .tasks,
 body.zen footer.hint,
-body.zen .tabbar {
-  opacity: 0;
-  pointer-events: none;
+body.zen .site-footer,
+body.zen .tabbar,
+body.zen .page[data-page="reports"],
+body.zen .page[data-page="log"] {
+  display: none !important;
 }
-body.zen .tabbar { transform: translateY(100%); }
+body.zen .tabbar { transform: none; }
 body.zen .zen-hint { display: block; }
-body.zen .wrap { padding-bottom: var(--space-6); }
+body.zen .wrap {
+  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  justify-content: center;
+}
+body.zen .page[data-page="timer"].active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+  animation: none;
+}
+body.zen .ring-stage {
+  margin: 0 auto;
+}
+body.zen .controls {
+  margin-top: var(--space-5);
+}
+body.zen .site-footer { display: none !important; }
 
 @media (min-width: 600px) {
   .wrap { padding: var(--space-5) var(--space-6) calc(108px + env(safe-area-inset-bottom, 0px)); }
@@ -1162,7 +1199,6 @@ body.compact .page-head { margin-bottom: var(--space-4); }
   padding: 4px 8px;
 }
 .footer-updated:hover { color: var(--text); }
-body.zen .site-footer { opacity: 0; pointer-events: none; }
 
 @media (min-width: 800px) {
   .settings-sheet {
