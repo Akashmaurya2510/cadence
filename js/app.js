@@ -8,9 +8,29 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "2.5.0";
+  const APP_VERSION = "2.5.1";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "2.5.1",
+      date: "August 2026",
+      title: "Cadence 2.5.1",
+      blurb: "Mute on the ring; zen is timer-only until you tap for controls.",
+      items: [
+        { tag: "Polish", text: "Mute button sits on the timer ring (bottom-right)." },
+        { tag: "New", text: "In zen: tap the clock for controls; tap outside to hide them again." },
+      ],
+    },
+    {
+      version: "2.4.9",
+      date: "August 2026",
+      title: "Cadence 2.4.9",
+      blurb: "Mute on the ring; zen shows only the timer until you ask for controls.",
+      items: [
+        { tag: "Polish", text: "Mute button sits on the timer ring (bottom-right)." },
+        { tag: "New", text: "In zen: tap the clock for controls; tap outside to hide them." },
+      ],
+    },
     {
       version: "2.4.8",
       date: "August 2026",
@@ -438,6 +458,7 @@
     if (!btn || !icon) return;
     const muted = !!settings.muted;
     btn.classList.toggle("is-muted", muted);
+    btn.classList.toggle("ring-mute", true);
     btn.setAttribute("aria-pressed", muted ? "true" : "false");
     btn.setAttribute("aria-label", muted ? "Unmute tick sound" : "Mute tick sound");
     btn.title = muted ? "Tick muted — tap to unmute" : "Mute tick";
@@ -1120,11 +1141,14 @@
     return entry;
   }
 
-  function setZen(on) {
+  function setZen(on, showControls) {
     state.zen = !!on;
+    if (!state.zen) state.zenShowControls = false;
+    else if (showControls != null) state.zenShowControls = !!showControls;
+    else if (state.zenShowControls == null) state.zenShowControls = false;
     document.body.classList.toggle("zen", state.zen);
+    document.body.classList.toggle("zen-controls", state.zen && !!state.zenShowControls);
     document.documentElement.classList.toggle("zen-lock", state.zen);
-    // Prevent background scroll while focused
     if (state.zen) {
       document.body.style.overflow = "hidden";
       document.documentElement.style.overflow = "hidden";
@@ -1132,6 +1156,11 @@
       document.body.style.overflow = "";
       document.documentElement.style.overflow = "";
     }
+  }
+  function setZenControls(show) {
+    if (!state.zen) return;
+    state.zenShowControls = !!show;
+    document.body.classList.toggle("zen-controls", state.zenShowControls);
   }
   // Block page scroll in zen mode (empty space no longer scrolls away)
   document.addEventListener("touchmove", (e) => {
@@ -1146,7 +1175,7 @@
   function scheduleZen() {
     clearTimeout(zenTimer);
     if (state.running && state.mode === "focus") {
-      zenTimer = setTimeout(() => { if (state.running && state.mode === "focus") setZen(true); }, 1400);
+      zenTimer = setTimeout(() => { if (state.running && state.mode === "focus") setZen(true, false); }, 1400);
     }
   }
 
@@ -1300,12 +1329,34 @@
   document.querySelectorAll(".mode-switch button").forEach((b) => {
     b.onclick = () => switchMode(b.dataset.mode);
   });
-  $("ringStage").onclick = () => {
-    if (state.running) setZen(!state.zen);
+  $("ringStage").onclick = (e) => {
+    // Mute lives on the ring — ignore those clicks here
+    if (e.target.closest && e.target.closest("#muteBtn")) return;
+    if (!state.running) return;
+    if (state.zen) {
+      // Tap timer in zen → show controls
+      setZenControls(true);
+    } else {
+      // Enter zen pure (timer only)
+      setZen(true, false);
+    }
   };
   $("ringStage").onkeydown = (e) => {
-    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (state.running) setZen(!state.zen); }
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (!state.running) return;
+      if (state.zen) setZenControls(true);
+      else setZen(true, false);
+    }
   };
+
+  // Tap outside the clock in zen → hide controls (timer only)
+  document.addEventListener("click", (e) => {
+    if (!state.zen || !state.zenShowControls) return;
+    const t = e.target;
+    if (t.closest && (t.closest(".ring-stage") || t.closest(".controls") || t.closest(".modal") || t.closest(".settings-sheet") || t.closest("#muteBtn"))) return;
+    setZenControls(false);
+  });
 
   $("taskForm").onsubmit = (e) => {
     e.preventDefault();

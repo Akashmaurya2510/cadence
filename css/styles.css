@@ -1373,25 +1373,53 @@ body.compact .page-head { margin-bottom: var(--space-4); }
 }
 
 
-/* Mute toggle — tick only; completion tone stays in Settings */
-.mute-btn {
-  position: relative;
-  transition: color 0.2s var(--ease), background-color 0.2s var(--ease), border-color 0.2s var(--ease), opacity 0.2s var(--ease);
-}
-.mute-btn svg {
-  width: 18px;
-  height: 18px;
-}
-.mute-btn.is-muted {
-  color: var(--text-dim);
-  background: var(--surface-2);
-  border-color: var(--text-dim);
-  opacity: 0.85;
-}
 
-.mute-btn.is-muted {
-  color: var(--text-dim) !important;
-  background: var(--surface-2) !important;
+
+/* Mute control on ring (bottom-right) */
+.ring-mute {
+  position: absolute;
+  right: 6%;
+  bottom: 6%;
+  z-index: 3;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  backdrop-filter: blur(8px);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.08));
+  transition: color 0.2s var(--ease), background 0.2s var(--ease), border-color 0.2s var(--ease), transform 0.15s var(--ease);
+}
+.ring-mute svg { width: 18px; height: 18px; }
+.ring-mute:active { transform: scale(0.94); }
+.ring-mute.is-muted {
+  color: var(--text-dim);
+  border-color: var(--text-dim);
   opacity: 0.9;
 }
-.mute-btn svg { width: 18px; height: 18px; }
+body.zen .ring-mute {
+  background: color-mix(in oklab, var(--surface) 70%, transparent);
+}
+
+/* Zen: pure timer by default; show controls only when .zen-controls */
+body.zen:not(.zen-controls) .controls,
+body.zen:not(.zen-controls) .pips,
+body.zen:not(.zen-controls) .break-suggest {
+  display: none !important;
+}
+body.zen:not(.zen-controls) .zen-hint {
+  display: block;
+}
+body.zen.zen-controls .zen-hint {
+  display: none;
+}
+body.zen.zen-controls .controls {
+  display: flex;
+  margin-top: var(--space-5);
+}
