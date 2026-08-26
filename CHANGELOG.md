@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.5.0 — August 2026
+
+- **New** Two new themes, Glacier (cool slate/ice) and Espresso (warm copper/sage), replacing Moss and Dusk.
+- **New** Aurora — a hidden theme that unlocks as a surprise reward at a 7-day streak.
+- **Polish** Frosted-glass treatment on the theme popover and all modals (blur, saturation, subtle top-edge sheen).
+- **Polish** Add-task button now uses a proper icon instead of a plain "+".
+- **Fix** Removed a leftover dead reference from the earlier sample-history removal.
+
 ## 2.4.6 — August 2026
 
 - **Polish** Zen mode: scroll locked, chrome removed from layout, timer centered (no empty scroll).

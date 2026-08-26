@@ -6,9 +6,9 @@
   const CELEBRATE_KEY = "cadence-celebrated";
   const LOG_PAGE = 40;
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
-  const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", moss: "#121a16", dusk: "#17151f", oled: "#000000" };
+  const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "2.4.8";
+  const APP_VERSION = "2.5.0";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
     {
@@ -163,6 +163,7 @@
     lastTickSecond: null,
     logDayFilter: null,
     lastReviewDay: null,
+    auroraUnlocked: false,
     schemaVersion: SCHEMA_VERSION,
   };
 
@@ -236,7 +237,7 @@
       running, endsAt: running ? endsAt : null,
       focusCount: state.focusCount, tasks: state.tasks, activeTaskId: state.activeTaskId,
       sessions: state.sessions, demo: state.demo, lastExportAt: state.lastExportAt,
-      lastReviewDay: state.lastReviewDay,
+      lastReviewDay: state.lastReviewDay, auroraUnlocked: !!state.auroraUnlocked,
     };
   }
   function save() {
@@ -262,6 +263,7 @@
       state.demo = !!d.demo;
       state.lastExportAt = d.lastExportAt || 0;
       state.lastReviewDay = d.lastReviewDay || null;
+      state.auroraUnlocked = !!d.auroraUnlocked;
       state.schemaVersion = d.schemaVersion || 1;
       // Restore timer across refresh — actual resume in resumeTimerIfNeeded()
       state._restoreEndsAt = typeof d.endsAt === "number" ? d.endsAt : null;
@@ -339,6 +341,18 @@
       else cur = 1;
     }
     return Math.max(best, streak());
+  }
+  function checkAuroraUnlock() {
+    if (state.auroraUnlocked) return;
+    if (streak() < 7) return;
+    state.auroraUnlocked = true;
+    const card = $("auroraCard");
+    if (card) card.hidden = false;
+    save();
+    setTimeout(() => {
+      vibrate("success");
+      toast("7-day streak · Aurora theme unlocked", "View", () => { const b = $("themeBtn"); if (b) b.click(); });
+    }, 600);
   }
   function avgFocusSec() {
     const list = focusSessions();
@@ -836,7 +850,6 @@
     $("reportLead").textContent = weekSec === 0
       ? "Complete a focus session and this page fills in."
       : "You focused " + fmtMs(weekSec) + " this week" + (delta == null ? "." : ", " + Math.abs(delta) + "% " + (delta >= 0 ? "above" : "below") + " last week.");
-    if ($("demoBanner")) $("demoBanner").style.display = state.demo ? "flex" : "none";
     const stale = state.lastExportAt && (Date.now() - state.lastExportAt > 14 * 86400000);
     const never = !state.lastExportAt && state.sessions.length > 5 && !state.demo;
     $("exportNudge").hidden = !(stale || never);
@@ -1092,6 +1105,7 @@
       durationSec: elapsed, taskId: mode === "focus" ? state.activeTaskId : undefined, completed,
     };
     state.sessions.push(entry);
+    if (completed && mode === "focus") checkAuroraUnlock();
     if (completed && mode === "focus" && state.activeTaskId) {
       const t = state.tasks.find((x) => x.id === state.activeTaskId);
       if (t) {
@@ -1667,6 +1681,7 @@
 
   function renderAll() {
     applyTheme();
+    if (state.auroraUnlocked && $("auroraCard")) $("auroraCard").hidden = false;
     renderMuteBtn();
     refreshAllSteppers();
     $("switchAuto").classList.toggle("on", settings.autoStart);
