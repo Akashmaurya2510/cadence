@@ -514,6 +514,18 @@ textarea {
 .task.active .start-focus { display: inline-flex; align-items: center; gap: 4px; }
 .task.done { opacity: 0.72; }
 .task.done .start-focus { display: none; }
+.unselect-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 6px; margin-left: 8px;
+  font-size: 12px; font-weight: 500;
+  color: var(--text-dim); background: transparent;
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 6px 12px; cursor: pointer;
+  transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .unselect-chip:hover { color: var(--text); border-color: var(--text-dim); }
+}
 
 @media (max-width: 480px) {
   .bars { height: 140px; gap: 6px; }

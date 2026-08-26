@@ -553,6 +553,7 @@
             '<button class="due-chip' + (t.due === "today" ? " today" : "") + '" type="button">' + dueLabel + "</button>" +
           "</div>" +
           (t.archived || t.done ? "" : '<button type="button" class="start-focus">Start focus</button>') +
+          (t.id === state.activeTaskId ? '<button type="button" class="meta-chip unselect-chip">✕ Unselect</button>' : "") +
         "</div>" +
         '<div class="actions">' +
           '<button class="iconish up" aria-label="Move up" title="Move up">↑</button>' +
@@ -566,13 +567,6 @@
         "</div>";
       function selectTask(start) {
         if (t.archived || t.done) return;
-        if (!start && state.activeTaskId === t.id) {
-          // Second tap on the active task unselects it
-          state.activeTaskId = null;
-          save(); renderTasks(); renderTimer();
-          toast("Unselected");
-          return;
-        }
         state.activeTaskId = t.id;
         if (!state.running) {
           if (state.mode !== "focus") state.mode = "focus";
@@ -582,6 +576,11 @@
         showPage("timer");
         if (start && !state.running) startTimer();
         else if (!start) toast("Selected · " + t.title);
+      }
+      function unselectTask() {
+        state.activeTaskId = null;
+        save(); renderTasks(); renderTimer();
+        toast("Unselected");
       }
       row.querySelector(".chk").onclick = (e) => {
         e.stopPropagation();
@@ -593,6 +592,8 @@
       row.querySelector(".title").ondblclick = (e) => { e.preventDefault(); startEdit(row, t); };
       const startBtn = row.querySelector(".start-focus");
       if (startBtn) startBtn.onclick = (e) => { e.stopPropagation(); selectTask(true); };
+      const unselectBtn = row.querySelector(".unselect-chip");
+      if (unselectBtn) unselectBtn.onclick = (e) => { e.stopPropagation(); unselectTask(); };
       row.querySelector(".due-chip").onclick = (e) => {
         e.stopPropagation();
         t.due = t.due === "today" ? "later" : t.due === "later" ? null : "today";
@@ -1437,6 +1438,26 @@
     toast("Exported CSV");
   }
   if ($("exportCsvBtn")) $("exportCsvBtn").onclick = exportCsv;
+  function exportTasksCsv() {
+    const rows = [["id", "title", "done", "archived", "due", "pomodoros", "target", "focusMinOverride"]];
+    const esc = (v) => {
+      const str = v == null ? "" : String(v);
+      return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+    };
+    state.tasks.forEach((t) => {
+      rows.push([
+        t.id, t.title, t.done ? "1" : "0", t.archived ? "1" : "0",
+        t.due || "", t.pomodoros || 0, t.target || 0, t.focusMin || "",
+      ].map(esc));
+    });
+    const blob = new Blob([rows.map((r) => r.join(",")).join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "cadence-tasks.csv";
+    a.click();
+    toast("Exported tasks CSV");
+  }
+  if ($("exportTasksCsvBtn")) $("exportTasksCsvBtn").onclick = exportTasksCsv;
   $("copyBtn").onclick = async () => {
     const text = JSON.stringify(exportPayload(), null, 2);
     try {
