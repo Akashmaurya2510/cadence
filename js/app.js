@@ -8,9 +8,20 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.0.1";
+  const APP_VERSION = "1.0.2";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.0.2",
+      date: "August 2026",
+      title: "Cadence 1.0.2",
+      blurb: "Three production polish additions — tab status, zero-latency chime, and backup/restore.",
+      items: [
+        { tag: "New", text: "Dynamic browser tab title shows remaining time while focusing; tab flashes on session complete." },
+        { tag: "New", text: "Built-in Web Audio API chime synthesizer — no external files needed for notifications." },
+        { tag: "New", text: "Backup & Restore card in Settings — export a full localStorage snapshot as a date-stamped .json file and restore it on any device." },
+      ],
+    },
     {
       version: "1.0.1",
       date: "August 2026",
@@ -463,6 +474,35 @@
     } catch (e) { /* ignore */ }
   }
 
+  function playChimeSynth() {
+    try {
+      const ac = ctx();
+      const t0 = ac.currentTime;
+      const peak = 0.42 * volScale();
+      const osc1 = ac.createOscillator();
+      const gain1 = ac.createGain();
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(587.33, t0);
+      gain1.gain.setValueAtTime(0.0001, t0);
+      gain1.gain.linearRampToValueAtTime(peak, t0 + 0.02);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.7);
+      osc1.connect(gain1).connect(ac.destination);
+      osc1.start(t0);
+      osc1.stop(t0 + 0.75);
+
+      const osc2 = ac.createOscillator();
+      const gain2 = ac.createGain();
+      osc2.type = "sine";
+      osc2.frequency.setValueAtTime(880, t0 + 0.18);
+      gain2.gain.setValueAtTime(0.0001, t0 + 0.18);
+      gain2.gain.linearRampToValueAtTime(peak * 0.85, t0 + 0.22);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.0);
+      osc2.connect(gain2).connect(ac.destination);
+      osc2.start(t0 + 0.18);
+      osc2.stop(t0 + 1.05);
+    } catch (e) { /* ignore */ }
+  }
+
   function renderMuteBtn() {
     const btn = $("muteBtn");
     const icon = $("muteIcon");
@@ -827,9 +867,10 @@
     $("playBtn").setAttribute("aria-label", state.running ? "Pause" : "Start");
     $("ringStage").classList.toggle("breathing", state.running);
     const modeShort = MODE_LABEL[state.mode] || "Focus";
-    if (state.running) {
-      document.title = mm + ":" + ss + " · " + modeShort + " · Cadence";
-    } else {
+    const modeLabel = state.mode === "focus" ? "Focus" : "Break";
+    if (state.running && !state.titleFlashInterval) {
+      document.title = "(" + mm + ":" + ss + ") " + modeLabel + " — Cadence";
+    } else if (!state.running && !state.titleFlashInterval) {
       document.title = "Cadence";
     }
     // Active task on ring
@@ -1359,6 +1400,8 @@
     const wasFocus = state.mode === "focus";
     const entry = logSession(state.mode, durationFor(state.mode), true);
     playSound();
+    playChimeSynth();
+    flashTitleComplete();
     vibrate("done");
     bump($("ringStage"), "ring-complete");
     notify(MODE_LABEL[state.mode] + " complete", "Up next: " + MODE_LABEL[nextModeAfter(state.mode, state.focusCount)]);
@@ -1371,6 +1414,24 @@
     } else {
       advance(true);
     }
+  }
+
+  function stopTitleFlash() {
+    if (state.titleFlashInterval) {
+      clearInterval(state.titleFlashInterval);
+      state.titleFlashInterval = null;
+    }
+    state._titleFlashOn = false;
+  }
+  function flashTitleComplete() {
+    stopTitleFlash();
+    state._titleFlashOn = true;
+    const flash = () => {
+      document.title = state._titleFlashOn ? "🔔 Session Complete! — Cadence" : "Cadence";
+      state._titleFlashOn = !state._titleFlashOn;
+    };
+    flash();
+    state.titleFlashInterval = setInterval(flash, 1000);
   }
 
   function tick() {
@@ -1858,6 +1919,70 @@
       toast("Could not import that file — existing data kept");
     }
   };
+
+  $("backupExportBtn").onclick = () => {
+    try {
+      const dump = {};
+      const prefix = "cadence-";
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        if (!k.startsWith(prefix) && k !== KEY) continue;
+        const raw = localStorage.getItem(k);
+        try { dump[k] = JSON.parse(raw); } catch (e) { dump[k] = raw; }
+      }
+      dump.__meta = {
+        app: "cadence",
+        version: APP_VERSION,
+        exportedAt: new Date().toISOString(),
+      };
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      const filename = "cadence_backup_" + yyyy + "-" + mm + "-" + dd + ".json";
+      const blob = new Blob([JSON.stringify(dump, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      toast("Backup saved — " + filename);
+    } catch (e) { toast("Could not save backup"); }
+  };
+  $("backupImportBtn").onclick = () => $("backupImportFile").click();
+  $("backupImportFile").onchange = async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!data || typeof data !== "object" || !data.__meta || data.__meta.app !== "cadence") {
+        throw new Error("schema");
+      }
+      const ok = await askConfirm({
+        title: "Restore from backup?",
+        text: "This will overwrite the current data on this device. Continue?",
+        ok: "Restore",
+        danger: true,
+      });
+      if (!ok) return;
+      let count = 0;
+      Object.keys(data).forEach((k) => {
+        if (k === "__meta") return;
+        const v = data[k];
+        const serialized = (typeof v === "string") ? v : JSON.stringify(v);
+        localStorage.setItem(k, serialized);
+        count++;
+      });
+      try { renderAll(); } catch (err) { /* ignore */ }
+      toast("Restored " + count + " entr" + (count === 1 ? "y" : "ies") + " from backup");
+    } catch (err) {
+      toast("Could not import — not a valid Cadence backup");
+    }
+  };
+
   $("clearBtn").onclick = async () => {
     const ok = await askConfirm({
       title: "Clear all data?",
@@ -1924,11 +2049,12 @@
   });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
+      stopTitleFlash();
       tick();
       if (state.running) renderTimer();
     }
   });
-  window.addEventListener("pageshow", () => { if (state.running) tick(); });
+  window.addEventListener("pageshow", () => { stopTitleFlash(); if (state.running) tick(); });
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
     if (settings.themeAuto) { applyTheme(); save(); }
   });

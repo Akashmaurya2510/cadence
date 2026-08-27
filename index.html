@@ -334,6 +334,13 @@
           <span class="set-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg></span>
           <div><h3>Data</h3><p>Everything stays on this device. Back it up, bring data in from another device, or wipe it.</p></div>
         </div>
+        <div class="backup-card">
+          <div class="backup-label">Backup &amp; Restore</div>
+          <button class="ghost-btn" id="backupExportBtn" type="button">Export Backup JSON</button>
+          <button class="ghost-btn" id="backupImportBtn" type="button">Import Backup JSON</button>
+          <input id="backupImportFile" type="file" accept="application/json" hidden>
+        </div>
+        <div class="backup-divider"><span>More options</span></div>
         <button class="ghost-btn" id="exportBtn" type="button">Export report JSON</button>
         <button class="ghost-btn" id="exportCsvBtn" type="button">Export sessions CSV</button>
         <button class="ghost-btn" id="exportTasksCsvBtn" type="button">Export tasks CSV</button>

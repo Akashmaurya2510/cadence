@@ -733,6 +733,47 @@ input[type="range"] { width: 100%; max-width: 100%; accent-color: var(--accent);
 }
 .ghost-btn.danger { color: #c45c5c; }
 .ghost-btn.stacked { padding-top: 10px; padding-bottom: 10px; min-height: 52px; }
+.backup-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.backup-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  opacity: 0.75;
+}
+.backup-divider {
+  position: relative;
+  text-align: center;
+  margin: 8px 0;
+}
+.backup-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border);
+}
+.backup-divider span {
+  position: relative;
+  background: var(--surface-2);
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
 .btn-hint {
   display: block;
   font-family: var(--font-sans);
