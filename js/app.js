@@ -1600,10 +1600,15 @@
   }
   function settingsScrollSpy() {
     if (!settingsBody || !settingsGroups.length) return;
+    const isBottom = settingsBody.scrollHeight - settingsBody.scrollTop <= settingsBody.clientHeight + 24;
+    if (isBottom) {
+      setActiveRail(settingsGroups[settingsGroups.length - 1].dataset.group);
+      return;
+    }
     const bodyRect = settingsBody.getBoundingClientRect();
     let current = settingsGroups[0];
     settingsGroups.forEach((g) => {
-      if (g.getBoundingClientRect().top - bodyRect.top <= 32) current = g;
+      if (g.getBoundingClientRect().top - bodyRect.top <= 48) current = g;
     });
     setActiveRail(current.dataset.group);
   }
