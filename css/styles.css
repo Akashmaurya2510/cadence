@@ -1323,8 +1323,6 @@ body.compact .page-head { margin-bottom: var(--space-4); }
   .settings-sheet {
     inset: 0;
     background: rgba(12, 13, 15, 0.55);
-    align-items: center;
-    justify-content: center;
     padding: 24px;
   }
   .settings-sheet.open { backdrop-filter: blur(6px); }
@@ -1336,8 +1334,10 @@ body.compact .page-head { margin-bottom: var(--space-4); }
   .settings-sheet {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     width: min(760px, 100%);
     max-height: min(84vh, 720px);
+    margin: auto;
     border-radius: var(--radius-xl);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-lg);
