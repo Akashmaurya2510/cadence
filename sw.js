@@ -1,4 +1,4 @@
-const CACHE = "cadence-v2.6.1";
+const CACHE = "cadence-v1.0.0";
 const ASSETS = [
   "./",
   "./index.html",

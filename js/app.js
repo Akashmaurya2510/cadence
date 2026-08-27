@@ -8,166 +8,18 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "2.6.1";
+  const APP_VERSION = "1.0.0";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
     {
-      version: "2.5.5",
+      version: "1.0.0",
       date: "August 2026",
-      title: "Cadence 2.5.5",
-      blurb: "Paused focus progress is remembered per task when you switch lectures.",
+      title: "Cadence 1.0",
+      blurb: "Initial build — a calm, fully local pomodoro timer.",
       items: [
-        { tag: "Fix", text: "Switching tasks no longer resets a paused focus timer — remaining time is kept per task." },
-        { tag: "Fix", text: "Selecting Tarun Sir / Nimisha Mam (or any task) restores the leftover minutes you paused at." },
-      ],
-    },
-    {
-      version: "2.5.4",
-      date: "August 2026",
-      title: "Cadence 2.5.4",
-      blurb: "Fullscreen on play/ring gesture; zen hint fades after a few seconds.",
-      items: [
-        { tag: "Fix", text: "Fullscreen requests on Start and ring tap so Android can hide system bars." },
-        { tag: "Polish", text: "Zen tip shows briefly, then hides." },
-      ],
-    },
-    {
-      version: "2.5.3",
-      date: "August 2026",
-      title: "Cadence 2.5.3",
-      blurb: "Zen: OLED pixel shift and immersive fullscreen.",
-      items: [
-        { tag: "New", text: "Anti-burn-in: zen view shifts a few pixels every minute." },
-        { tag: "New", text: "Entering zen requests fullscreen to hide system bars when the browser allows it." },
-      ],
-    },
-    {
-      version: "2.5.2",
-      date: "August 2026",
-      title: "Cadence 2.5.2",
-      blurb: "Louder tones, tick volume, simpler What's new, clearer tour and zen taps.",
-      items: [
-        { tag: "Fix", text: "Completion and tick sounds are much louder; tick has its own volume." },
-        { tag: "Polish", text: "What's new is a single Okay — no more scrolling for Later." },
-        { tag: "Polish", text: "Zen: tap clock to toggle controls; tap background to exit zen (timer keeps going)." },
-      ],
-    },
-    {
-      version: "2.5.1",
-      date: "August 2026",
-      title: "Cadence 2.5.1",
-      blurb: "Mute on the ring; zen is timer-only until you tap for controls.",
-      items: [
-        { tag: "Polish", text: "Mute button sits on the timer ring (bottom-right)." },
-        { tag: "New", text: "In zen: tap the clock for controls; tap outside to hide them again." },
-      ],
-    },
-    {
-      version: "2.4.9",
-      date: "August 2026",
-      title: "Cadence 2.4.9",
-      blurb: "Mute on the ring; zen shows only the timer until you ask for controls.",
-      items: [
-        { tag: "Polish", text: "Mute button sits on the timer ring (bottom-right)." },
-        { tag: "New", text: "In zen: tap the clock for controls; tap outside to hide them." },
-      ],
-    },
-    {
-      version: "2.4.8",
-      date: "August 2026",
-      title: "Cadence 2.4.8",
-      blurb: "Tick mute button fixed; completion tone stays on Settings.",
-      items: [
-        { tag: "Fix", text: "Speaker button toggles and shows muted state; only mutes the tick." },
-        { tag: "Polish", text: "Completion tone is controlled only by Settings → Sound." },
-      ],
-    },
-    {
-      version: "2.4.7",
-      date: "August 2026",
-      title: "Cadence 2.4.7",
-      blurb: "Monochrome zen and a one-tap mute for the tick.",
-      items: [
-        { tag: "New", text: "Zen mode goes monochrome so the ring stays calm and distraction-free." },
-        { tag: "New", text: "Speaker button on the timer row mutes the tick sound." },
-      ],
-    },
-    {
-      version: "2.4.6",
-      date: "August 2026",
-      title: "Cadence 2.4.6",
-      blurb: "Zen focus that does not scroll away, haptics, Lucide icons, and docs that match the app.",
-      items: [
-        { tag: "Polish", text: "Zen mode locks scroll and removes chrome from layout so the timer stays centered." },
-        { tag: "New", text: "Haptics and micro-interactions on start, pause, complete, select, and tabs." },
-        { tag: "Polish", text: "Lucide-style tab and header icons; sample history loader removed." },
-        { tag: "Fix", text: "Running timer survives refresh; task tap selects and unselects cleanly." },
-      ],
-    },
-    {
-      version: "2.4.0",
-      date: "August 2026",
-      title: "Cadence 2.4",
-      blurb: "Full-screen settings, footer, PWA updates that stick, and task select that stays selected.",
-      items: [
-        { tag: "New", text: "Settings open as a full-screen sheet instead of a side drawer." },
-        { tag: "New", text: "Site footer with last-updated → What's new; changelog close (X)." },
-        { tag: "Fix", text: "Task select/unselect; shortcuts in Settings; PWA refresh picks up new builds." },
-        { tag: "Fix", text: "Running timer persists across refresh and app close." },
-      ],
-    },
-    {
-      version: "2.3.0",
-      date: "August 2026",
-      title: "Cadence 2.3",
-      blurb: "Theme + accent picker, mini stats, compact mode, and calmer skip confirms.",
-      items: [
-        { tag: "New", text: "Theme panel with named cards and independent accent colors." },
-        { tag: "New", text: "Mini stats under the timer (streak · today goal progress)." },
-        { tag: "New", text: "Compact layout toggle and confirm-before-skip." },
-        { tag: "Polish", text: "Accent tints the ring, chips, and theme icon across all themes." },
-      ],
-    },
-    {
-      version: "2.2.0",
-      date: "August 2026",
-      title: "Cadence 2.2",
-      blurb: "Theme, tasks, and reports polished for mobile — click a task to focus, auto-strike when the target is met.",
-      items: [
-        { tag: "Polish", text: "Theme swatches match each palette; theme icon uses the accent color." },
-        { tag: "Polish", text: "Larger heatmap with weekday labels; cleaner hour chart on phones." },
-        { tag: "New", text: "Tap a task to make it active; Start focus button; auto-strike when target is hit." },
-        { tag: "Polish", text: "Task rows tighter: progress, length, and due chips cleaned up." },
-        { tag: "New", text: "Empty-state hints on sparse charts; peak-hour highlight." },
-      ],
-    },
-    {
-      version: "2.1.0",
-      date: "August 2026",
-      title: "Cadence 2.1",
-      blurb: "Live title, active task on the ring, break ideas, CSV export, and calmer polish — still fully local.",
-      items: [
-        { tag: "New", text: "Live tab title with mode and estimated end time." },
-        { tag: "New", text: "Active task shown on the ring; custom focus length per task." },
-        { tag: "New", text: "Break suggestions, daily review prompt, and sound volume." },
-        { tag: "New", text: "Heatmap and week bars open the matching log filter." },
-        { tag: "New", text: "CSV export, system theme auto, Today/This-week log chips." },
-        { tag: "Polish", text: "Stronger background resync, aria-live timer, focus-visible, system fonts offline." },
-      ],
-    },
-    {
-      version: "2.0.0",
-      date: "August 2026",
-      title: "Cadence 2.0",
-      blurb: "A quieter timer, richer reports, and a home-screen app — still fully local.",
-      items: [
-        { tag: "New", text: "Install Cadence as a standalone app, with offline support." },
-        { tag: "New", text: "Zen mode hides chrome while you focus. Tap the timer to bring it back." },
-        { tag: "New", text: "Session notes, vibration, and three completion sounds." },
-        { tag: "New", text: "Edit, reorder, pause, and set pomodoro targets on tasks." },
-        { tag: "New", text: "Longest streak, completion rate, time-by-task, and weekly/monthly goals." },
-        { tag: "New", text: "Search the log, export a report image, and copy a JSON backup." },
-        { tag: "Fix", text: "Settings drawer and tab bar hold up on mobile zoom and gesture bars." },
+        { tag: "New", text: "Focus/short break/long break timer with tasks, streaks, reports, and badges." },
+        { tag: "New", text: "Installable offline app with themes, zen mode, and haptics." },
+        { tag: "New", text: "Everything stays on your device — export, import, and CSV backup built in." },
       ],
     },
   ];

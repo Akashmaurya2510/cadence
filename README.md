@@ -83,20 +83,22 @@ Settings → **Export report JSON**, **Export sessions CSV**, **Export tasks CSV
 
 ## Shipping a new version
 
+Only do this for a genuinely notable change — not every small fix needs a version bump or a changelog entry.
+
 1. Bump `APP_VERSION` in `js/app.js`
-2. Add an entry at the top of the in-app `CHANGELOG` array
-3. Bump the cache name in `sw.js` (e.g. `cadence-v2.4.6`)
+2. Add an entry at the top of the in-app `CHANGELOG` array **with a matching `version` string** — if this is skipped, `unseenChangelog()` can't find the current version in the list and falls back to showing the *entire* history to every returning user
+3. Bump the cache name in `sw.js` to match (e.g. `cadence-v1.1.0`) — otherwise installed PWAs never see the update at all
 4. Update the footer date in `index.html` if you want
 
-Returning visitors see What’s new once. First-time visitors get the welcome tour.
+Returning visitors see What's new once. First-time visitors get the welcome tour.
 
 ```js
-const APP_VERSION = "2.4.6";
+const APP_VERSION = "1.1.0";
 const CHANGELOG = [
   {
-    version: "2.4.6",
+    version: "1.1.0",
     date: "August 2026",
-    title: "Cadence 2.4.6",
+    title: "Cadence 1.1",
     blurb: "A short line about this release.",
     items: [
       { tag: "New", text: "The thing you added." },
