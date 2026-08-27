@@ -27,9 +27,9 @@
   const settings = {
     focus: 25, short: 5, long: 15, interval: 4,
     dailyGoal: 8, weeklyGoal: 40, monthlyGoal: 160,
-    autoStart: false, sound: true, notify: false, tickSound: false,
-    vibrate: true, soundChoice: "chime", volume: 2, tickVolume: 2, themeAuto: false,
-    accent: "sage", compact: false, confirmSkip: true, muted: false,
+    autoStart: false, sound: true, notify: false, tickSound: true,
+    vibrate: true, soundChoice: "chime", volume: 2, themeAuto: false,
+    accent: "sage", compact: false, confirmSkip: true, muted: true,
   };
   const ACCENTS = {
     sage:   { work: "#8aab74", soft: "rgba(138,171,116,0.16)", ink: "#0d150a" },
@@ -207,12 +207,13 @@
       state._restoreEndsAt = typeof d.endsAt === "number" ? d.endsAt : null;
       state._restoreRunning = !!d.running && !!d.endsAt;
       if (settings.volume == null) settings.volume = 2;
-      if (settings.tickVolume == null) settings.tickVolume = 2;
       if (settings.themeAuto == null) settings.themeAuto = false;
       if (!settings.accent) settings.accent = "sage";
       if (settings.compact == null) settings.compact = false;
       if (settings.confirmSkip == null) settings.confirmSkip = true;
-      if (settings.muted == null) settings.muted = false;
+      // Tick sound is always available; only the mute button (defaults to muted) controls it.
+      settings.tickSound = true;
+      if (settings.muted == null) settings.muted = true;
       return true;
     } catch { return false; }
   }
@@ -377,10 +378,6 @@
     const v = settings.volume || 2;
     return v === 1 ? 0.7 : v === 3 ? 2.4 : 1.5;
   }
-  function tickVolScale() {
-    const v = settings.tickVolume || 2;
-    return v === 1 ? 0.5 : v === 3 ? 1.8 : 1.0;
-  }
   function tone(ac, freq, start, dur, type, gain) {
     const o = ac.createOscillator(), g = ac.createGain();
     o.type = type || "sine"; o.frequency.value = freq;
@@ -432,7 +429,9 @@
       : '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>';
   }
   function playTick() {
-    if (settings.muted || !settings.tickSound || state.mode !== "focus") return;
+    // Tick is off by default and only plays when the ring speaker button is unmuted.
+    // There's no separate tick-volume control — it always plays at full volume.
+    if (settings.muted || state.mode !== "focus") return;
     if (document.visibilityState === "hidden") return;
     try {
       const ac = ctx();
@@ -440,7 +439,7 @@
       const o = ac.createOscillator(), g = ac.createGain();
       o.type = "square";
       o.frequency.value = 880;
-      const peak = Math.min(0.55, 0.22 * tickVolScale());
+      const peak = 0.55;
       g.gain.setValueAtTime(0.0001, t0);
       g.gain.linearRampToValueAtTime(peak, t0 + 0.008);
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.045);
@@ -1545,7 +1544,7 @@
   function refreshStepper(el) {
     const key = el.dataset.key, min = +el.dataset.min, max = +el.dataset.max, suffix = el.dataset.suffix;
     const v = settings[key];
-    if (key === "volume" || key === "tickVolume") $(el.dataset.val).textContent = VOLUME_LABEL[v] || "Normal";
+    if (key === "volume") $(el.dataset.val).textContent = VOLUME_LABEL[v] || "Normal";
     else $(el.dataset.val).textContent = v + " " + suffix;
     el.querySelector(".step-fill").style.width = (((v - min) / (max - min)) * 100) + "%";
     el.querySelectorAll(".step-btn").forEach((b) => {
@@ -1599,7 +1598,6 @@
   }
   bindSwitch("switchAuto", "autoStart");
   bindSwitch("switchSound", "sound");
-  bindSwitch("switchTick", "tickSound");
   bindSwitch("switchNotify", "notify");
   bindSwitch("switchVibrate", "vibrate");
   if ($("switchThemeAuto")) {
@@ -1845,7 +1843,6 @@
     refreshAllSteppers();
     $("switchAuto").classList.toggle("on", settings.autoStart);
     $("switchSound").classList.toggle("on", settings.sound);
-    $("switchTick").classList.toggle("on", settings.tickSound);
     $("switchNotify").classList.toggle("on", settings.notify);
     $("switchVibrate").classList.toggle("on", settings.vibrate);
     if ($("switchThemeAuto")) {
