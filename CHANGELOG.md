@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.3 — August 2026
+
+- Fix: the completion sound is now warmed up on Start (a real tap) instead of first touched minutes later from a background timer — more reliable after a long screen-lock.
+- Polish: fonts now load via a proper `<link>` instead of a render-blocking CSS `@import`.
+
 ## 1.0.2 — August 2026
 
 - Fix: the "Okay" button's footer in the What's new popup no longer shows a mismatched solid-white box against the frosted-glass background — most visible on light themes like Linen.

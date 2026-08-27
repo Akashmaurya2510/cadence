@@ -8,9 +8,19 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.0.2";
+  const APP_VERSION = "1.0.3";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.0.3",
+      date: "August 2026",
+      title: "Cadence 1.0.3",
+      blurb: "More reliable completion sound; faster font load.",
+      items: [
+        { tag: "Fix", text: "The completion sound is now warmed up on Start (a real tap) instead of first touched minutes later from a background timer, which could fail silently after a long screen-lock." },
+        { tag: "Polish", text: "Fonts now load via a proper link tag instead of a render-blocking CSS import." },
+      ],
+    },
     {
       version: "1.0.2",
       date: "August 2026",
@@ -1421,7 +1431,10 @@
   $("playBtn").onclick = () => {
     if (state.running) stopTimer();
     else {
-      // User gesture — required for fullscreen on Android Chrome
+      // User gesture — required for fullscreen on Android Chrome, and the most
+      // reliable moment to warm up the AudioContext so it isn't first touched
+      // minutes later from a background timer callback with no active gesture.
+      try { ctx(); } catch (e) { /* ignore */ }
       enterImmersive();
       startTimer();
     }
