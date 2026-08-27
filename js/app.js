@@ -8,9 +8,19 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.0.0";
+  const APP_VERSION = "1.0.1";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.0.1",
+      date: "August 2026",
+      title: "Cadence 1.0.1",
+      blurb: "A small update with two quality-of-life additions.",
+      items: [
+        { tag: "New", text: "Clear completed button in the task toolbar — quickly clean up done tasks with an undo." },
+        { tag: "New", text: "Shift + E quick export shortcut — saves a JSON backup in one keystroke." },
+      ],
+    },
     {
       version: "1.0.0",
       date: "August 2026",
@@ -1516,6 +1526,21 @@
     $("taskInput").value = "";
     save(); renderTasks();
   };
+  if ($("clearDoneTasksBtn")) {
+    $("clearDoneTasksBtn").onclick = () => {
+      const removed = state.tasks.filter((t) => t.done);
+      if (!removed.length) { toast("No completed tasks to clear"); return; }
+      const removedCopy = removed.map((t) => ({ ...t }));
+      const removedIds = new Set(removedCopy.map((t) => t.id));
+      state.tasks = state.tasks.filter((t) => !t.done);
+      if (state.activeTaskId && removedIds.has(state.activeTaskId)) state.activeTaskId = null;
+      save(); renderTasks();
+      toast(removedCopy.length + " task" + (removedCopy.length === 1 ? "" : "s") + " cleared", "Undo", () => {
+        state.tasks = removedCopy.concat(state.tasks);
+        save(); renderTasks();
+      });
+    };
+  }
   document.querySelectorAll("[data-task-view]").forEach((b) => {
     b.onclick = () => {
       state.taskView = b.dataset.taskView;
@@ -1897,6 +1922,7 @@
     const tag = document.activeElement && document.activeElement.tagName;
     const typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
     if (e.key === "Escape") { closeTopModal(); return; }
+    if (e.shiftKey && e.key === "E") { e.preventDefault(); $("exportBtn").click(); return; }
     if (typing) return;
     if (e.code === "Space") { e.preventDefault(); $("playBtn").click(); }
     if (e.key === "?") { e.preventDefault(); $("helpModal").classList.toggle("open"); }

@@ -21,7 +21,7 @@ Vanilla HTML, CSS, and JavaScript. **No build step**, no accounts, nothing uploa
 - Edit, reorder, today/later, pause, undo delete
 
 ### Look & feel
-- Themes: Graphite, Linen, Moss, Dusk, OLED + **System** (follows light/dark)
+- Themes: Graphite, Linen, Glacier, Espresso, OLED + **System** (follows light/dark)
 - Independent **accent** colors (amber, coral, mint, violet, rose, sky)
 - Lucide-style icons on the tab bar and header
 - Compact layout toggle; optional confirm-before-skip
@@ -73,6 +73,7 @@ For GitHub Pages, enable Pages on the branch that has `index.html` at the repo r
 | N or S | Skip |
 | 1 / 2 / 3 | Focus / short / long |
 | T | Focus the task input |
+| Shift + E | Quick export JSON |
 | , | Settings |
 | ? | Shortcut list |
 | Esc | Close settings / modal |
