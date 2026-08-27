@@ -1575,16 +1575,18 @@
   }
   function settingsScrollSpy() {
     if (!settingsBody || !settingsGroups.length) return;
-    const probe = settingsBody.scrollTop + 32;
+    const bodyRect = settingsBody.getBoundingClientRect();
     let current = settingsGroups[0];
-    settingsGroups.forEach((g) => { if (g.offsetTop <= probe) current = g; });
+    settingsGroups.forEach((g) => {
+      if (g.getBoundingClientRect().top - bodyRect.top <= 32) current = g;
+    });
     setActiveRail(current.dataset.group);
   }
   railItems.forEach((btn) => {
     btn.onclick = () => {
       const target = $("grp-" + btn.dataset.group);
       if (target && settingsBody) {
-        settingsBody.scrollTo({ top: target.offsetTop - 8, behavior: "smooth" });
+        settingsBody.scrollTo({ top: target.offsetTop - settingsBody.offsetTop - 8, behavior: "smooth" });
         setActiveRail(btn.dataset.group);
       }
     };

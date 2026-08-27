@@ -1248,6 +1248,8 @@ body.compact .page-head { margin-bottom: var(--space-4); }
 }
 .settings-rail { display: none; }
 .settings-body {
+  position: relative;
+  scroll-behavior: smooth;
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
