@@ -1598,8 +1598,9 @@
   function setActiveRail(name) {
     railItems.forEach((btn) => btn.classList.toggle("active", btn.dataset.group === name));
   }
+  let settingsScrollLocked = false;
   function settingsScrollSpy() {
-    if (!settingsBody || !settingsGroups.length) return;
+    if (!settingsBody || !settingsGroups.length || settingsScrollLocked) return;
     const isBottom = settingsBody.scrollHeight - settingsBody.scrollTop <= settingsBody.clientHeight + 24;
     if (isBottom) {
       setActiveRail(settingsGroups[settingsGroups.length - 1].dataset.group);
@@ -1616,8 +1617,10 @@
     btn.onclick = () => {
       const target = $("grp-" + btn.dataset.group);
       if (target && settingsBody) {
+        settingsScrollLocked = true;
         settingsBody.scrollTo({ top: target.offsetTop - settingsBody.offsetTop - 8, behavior: "smooth" });
         setActiveRail(btn.dataset.group);
+        setTimeout(() => { settingsScrollLocked = false; }, 400);
       }
     };
   });
