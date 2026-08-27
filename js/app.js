@@ -7,10 +7,24 @@
   const LOG_PAGE = 40;
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
+  // Each theme's native --work color, used only for the "Theme default" accent dot preview.
+  // Read from here (not the live --work CSS var) since an active accent override rewrites
+  // that variable — this map stays correct no matter what override is currently applied.
+  const THEME_WORK = { graphite: "#e7b54a", linen: "#b4552e", glacier: "#5ec8e8", espresso: "#d97b4f", oled: "#ff5470", aurora: "#4ee6a8" };
+  const THEME_WORK_INK = { graphite: "#171308", linen: "#fff6f1", glacier: "#051820", espresso: "#1a0d06", oled: "#170307", aurora: "#04140d" };
 
-  const APP_VERSION = "1.0.3";
+  const APP_VERSION = "1.0.4";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.0.4",
+      date: "August 2026",
+      title: "Cadence 1.0.4",
+      blurb: "Fix the Theme default accent dot actually changing color when you pick an accent.",
+      items: [
+        { tag: "Fix", text: "The 'Theme default' dot now always shows the current theme's real color, even while an accent override (Coral, Sky, etc.) is active — it no longer morphs into a duplicate of whatever you selected." },
+      ],
+    },
     {
       version: "1.0.3",
       date: "August 2026",
@@ -530,6 +544,12 @@
     document.querySelectorAll(".accent-dot").forEach((d) => {
       d.classList.toggle("on", d.dataset.accent === (settings.accent || "default"));
     });
+    const defaultDot = $("accentDefaultDot");
+    if (defaultDot) {
+      defaultDot.style.background = THEME_WORK[state.theme] || THEME_WORK.graphite;
+      const mark = defaultDot.querySelector(".accent-default-mark");
+      if (mark) mark.style.color = THEME_WORK_INK[state.theme] || THEME_WORK_INK.graphite;
+    }
     if ($("switchThemeAuto")) {
       $("switchThemeAuto").classList.toggle("on", !!settings.themeAuto);
       $("switchThemeAuto").setAttribute("aria-checked", settings.themeAuto ? "true" : "false");
