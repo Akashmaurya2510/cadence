@@ -849,10 +849,12 @@
     if (bs) {
       if (!state.running && (state.mode === "short" || state.mode === "long") && !state.zen) {
         bs.hidden = false;
-        const idea = BREAK_IDEAS[(state.focusCount + state.mode.length) % BREAK_IDEAS.length];
+        const idea = BREAK_IDEAS[state.focusCount % BREAK_IDEAS.length];
         $("breakText").textContent = idea;
       } else if (state.running && (state.mode === "short" || state.mode === "long")) {
         bs.hidden = false;
+        const idea = BREAK_IDEAS[state.focusCount % BREAK_IDEAS.length];
+        $("breakText").textContent = idea;
       } else {
         bs.hidden = true;
       }
