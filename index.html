@@ -331,13 +331,13 @@
       <section class="set-group" id="grp-data" data-group="data">
         <div class="set-group-head">
           <span class="set-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg></span>
-          <div><h3>Data</h3><p>Everything stays on this device. Back it up or wipe it.</p></div>
+          <div><h3>Data</h3><p>Everything stays on this device. Back it up, bring data in from another device, or wipe it.</p></div>
         </div>
         <button class="ghost-btn" id="exportBtn" type="button">Export report JSON</button>
         <button class="ghost-btn" id="exportCsvBtn" type="button">Export sessions CSV</button>
         <button class="ghost-btn" id="exportTasksCsvBtn" type="button">Export tasks CSV</button>
         <button class="ghost-btn" id="copyBtn" type="button">Copy data to clipboard</button>
-        <button class="ghost-btn" id="importBtn" type="button">Import JSON</button>
+        <button class="ghost-btn stacked" id="importBtn" type="button">Import JSON<span class="btn-hint">Merges with what's already here — nothing gets replaced</span></button>
         <input id="importFile" type="file" accept="application/json" hidden>
         <button class="ghost-btn danger" id="clearBtn" type="button">Clear all data</button>
       </section>

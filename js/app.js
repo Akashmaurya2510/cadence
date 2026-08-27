@@ -245,6 +245,45 @@
     return t && typeof t === "object" && typeof t.id === "string" && typeof t.title === "string";
   }
 
+  /** Combine this device's sessions with an imported set — never drops existing data.
+   *  Same id on both sides = same session (e.g. re-importing the same file), kept once.
+   *  Same mode + exact same start/end on both sides = treated as the same real session
+   *  even if it somehow got a different id, so it isn't double-counted. */
+  function mergeSessions(existing, incoming) {
+    const byId = new Map();
+    const timeKey = (s) => s.mode + "|" + s.startedAt + "|" + s.endedAt;
+    const seenTimeKeys = new Set();
+    existing.forEach((s) => { byId.set(s.id, s); seenTimeKeys.add(timeKey(s)); });
+    let added = 0;
+    incoming.forEach((s) => {
+      if (byId.has(s.id)) {
+        const cur = byId.get(s.id);
+        if (!cur.note && s.note) cur.note = s.note; // fill in a note recorded on the other device
+        return;
+      }
+      if (seenTimeKeys.has(timeKey(s))) return; // same real session, different id — skip the duplicate
+      byId.set(s.id, s);
+      seenTimeKeys.add(timeKey(s));
+      added++;
+    });
+    return { sessions: Array.from(byId.values()), added };
+  }
+  /** Combine task lists by id. On a collision, keep whichever copy has made more
+   *  progress (done, then higher pomodoro count) so neither device's progress is lost. */
+  function mergeTasks(existing, incoming) {
+    const byId = new Map();
+    existing.forEach((t) => byId.set(t.id, t));
+    let added = 0;
+    incoming.forEach((t) => {
+      if (!byId.has(t.id)) { byId.set(t.id, t); added++; return; }
+      const cur = byId.get(t.id);
+      const curScore = (cur.done ? 1e6 : 0) + (cur.pomodoros || 0);
+      const incScore = (t.done ? 1e6 : 0) + (t.pomodoros || 0);
+      if (incScore > curScore) byId.set(t.id, t);
+    });
+    return { tasks: Array.from(byId.values()), added };
+  }
+
   function mulberry32(a) {
     return function () {
       let t = a += 0x6D2B79F5;
@@ -1764,18 +1803,35 @@
     try {
       const d = JSON.parse(await file.text());
       if (!Array.isArray(d.sessions) || !Array.isArray(d.tasks)) throw new Error("bad");
-      const sessions = d.sessions.filter(isValidSession);
-      const tasks = d.tasks.filter(isValidTask).map(normalizeTask);
-      if (!sessions.length && d.sessions.length) throw new Error("shape");
-      Object.assign(settings, d.settings || {});
-      state.tasks = tasks;
-      state.sessions = sessions;
-      state.theme = d.theme || state.theme;
-      state.focusCount = d.focusCount || 0;
+      const incomingSessions = d.sessions.filter(isValidSession);
+      const incomingTasks = d.tasks.filter(isValidTask).map(normalizeTask);
+      if (!incomingSessions.length && d.sessions.length) throw new Error("shape");
+
+      // A brand-new device with nothing recorded yet acts like a full restore
+      // (settings and theme come along too). Once there's real data here,
+      // importing only ever adds to it — this device's settings stay put.
+      const isFreshDevice = state.sessions.length === 0 && state.tasks.length === 0;
+
+      const sMerge = mergeSessions(state.sessions, incomingSessions);
+      const tMerge = mergeTasks(state.tasks, incomingTasks);
+      state.sessions = sMerge.sessions;
+      state.tasks = tMerge.tasks;
+      if (Array.isArray(d.badgesUnlocked)) {
+        state.badgesUnlocked = Array.from(new Set([...(state.badgesUnlocked || []), ...d.badgesUnlocked]));
+      }
+      state.auroraUnlocked = !!state.auroraUnlocked || !!d.auroraUnlocked;
+      if (isFreshDevice) {
+        Object.assign(settings, d.settings || {});
+        state.theme = d.theme || state.theme;
+        state.focusCount = d.focusCount || 0;
+      }
       state.demo = false;
       renderAll();
       save();
-      toast("Imported " + sessions.length + " sessions");
+      const parts = [];
+      if (sMerge.added) parts.push(sMerge.added + " new session" + (sMerge.added === 1 ? "" : "s"));
+      if (tMerge.added) parts.push(tMerge.added + " new task" + (tMerge.added === 1 ? "" : "s"));
+      toast(parts.length ? "Merged — added " + parts.join(", ") : "Merged — nothing new to add");
     } catch (err) {
       Object.assign(settings, backup.settings);
       state.tasks = backup.tasks;

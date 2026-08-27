@@ -732,6 +732,15 @@ input[type="range"] { width: 100%; max-width: 100%; accent-color: var(--accent);
   .ghost-btn:hover { border-color: var(--text-dim); }
 }
 .ghost-btn.danger { color: #c45c5c; }
+.ghost-btn.stacked { padding-top: 10px; padding-bottom: 10px; min-height: 52px; }
+.btn-hint {
+  display: block;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin-top: 3px;
+}
 
 /* ===== Settings groups (cards) ===== */
 .set-group {
