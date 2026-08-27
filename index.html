@@ -217,82 +217,142 @@
     </div>
     <button type="button" class="settings-x" id="closeDrawer" aria-label="Close settings">×</button>
   </div>
-  <div class="settings-body">
-  <div class="field"><label>Focus length <span class="val" id="vFocus">25 min</span></label>
-    <div class="stepper" data-key="focus" data-min="5" data-max="60" data-step="5" data-suffix="min" data-val="vFocus">
-      <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease focus length">−</button>
-      <div class="step-bar"><div class="step-fill"></div></div>
-      <button type="button" class="step-btn" data-dir="1" aria-label="Increase focus length">+</button>
-    </div></div>
-  <div class="field"><label>Short break <span class="val" id="vShort">5 min</span></label>
-    <div class="stepper" data-key="short" data-min="1" data-max="20" data-step="1" data-suffix="min" data-val="vShort">
-      <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease short break">−</button>
-      <div class="step-bar"><div class="step-fill"></div></div>
-      <button type="button" class="step-btn" data-dir="1" aria-label="Increase short break">+</button>
-    </div></div>
-  <div class="field"><label>Long break <span class="val" id="vLong">15 min</span></label>
-    <div class="stepper" data-key="long" data-min="5" data-max="40" data-step="5" data-suffix="min" data-val="vLong">
-      <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease long break">−</button>
-      <div class="step-bar"><div class="step-fill"></div></div>
-      <button type="button" class="step-btn" data-dir="1" aria-label="Increase long break">+</button>
-    </div></div>
-  <div class="field"><label>Long break after <span class="val" id="vInterval">4 sessions</span></label>
-    <div class="stepper" data-key="interval" data-min="2" data-max="8" data-step="1" data-suffix="sessions" data-val="vInterval">
-      <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease long break interval">−</button>
-      <div class="step-bar"><div class="step-fill"></div></div>
-      <button type="button" class="step-btn" data-dir="1" aria-label="Increase long break interval">+</button>
-    </div></div>
-  <div class="field"><label>Daily goal <span class="val" id="vGoal">8 sessions</span></label>
-    <div class="stepper" data-key="dailyGoal" data-min="1" data-max="16" data-step="1" data-suffix="sessions" data-val="vGoal">
-      <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease daily goal">−</button>
-      <div class="step-bar"><div class="step-fill"></div></div>
-      <button type="button" class="step-btn" data-dir="1" aria-label="Increase daily goal">+</button>
-    </div></div>
-  <div class="field"><label>Weekly goal <span class="val" id="vWeekGoal">40 sessions</span></label>
-    <div class="stepper" data-key="weeklyGoal" data-min="4" data-max="80" data-step="1" data-suffix="sessions" data-val="vWeekGoal">
-      <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease weekly goal">−</button>
-      <div class="step-bar"><div class="step-fill"></div></div>
-      <button type="button" class="step-btn" data-dir="1" aria-label="Increase weekly goal">+</button>
-    </div></div>
-  <div class="field"><label>Monthly goal <span class="val" id="vMonthGoal">160 sessions</span></label>
-    <div class="stepper" data-key="monthlyGoal" data-min="8" data-max="320" data-step="4" data-suffix="sessions" data-val="vMonthGoal">
-      <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease monthly goal">−</button>
-      <div class="step-bar"><div class="step-fill"></div></div>
-      <button type="button" class="step-btn" data-dir="1" aria-label="Increase monthly goal">+</button>
-    </div></div>
-  <div class="toggle-row"><span>Auto-start next phase</span><div class="switch" id="switchAuto" role="switch" aria-checked="false"></div></div>
-  <div class="toggle-row"><span>Sound on completion</span><div class="switch on" id="switchSound" role="switch" aria-checked="true"></div></div>
-  <div class="field sound-field">
-    <label>Completion sound</label>
-    <div class="sound-picks" id="soundPicks">
-      <button type="button" class="chip on" data-sound="chime">Chime</button>
-      <button type="button" class="chip" data-sound="bell">Bell</button>
-      <button type="button" class="chip" data-sound="wood">Wood</button>
+  <div class="settings-shell">
+    <nav class="settings-rail" id="settingsRail" aria-label="Settings sections">
+      <button type="button" class="rail-item active" data-group="rhythm">
+        <svg class="rail-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <span>Rhythm</span>
+      </button>
+      <button type="button" class="rail-item" data-group="behavior">
+        <svg class="rail-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
+        <span>Behavior</span>
+      </button>
+      <button type="button" class="rail-item" data-group="sound">
+        <svg class="rail-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        <span>Sound &amp; haptics</span>
+      </button>
+      <button type="button" class="rail-item" data-group="data">
+        <svg class="rail-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+        <span>Data</span>
+      </button>
+      <button type="button" class="rail-item" data-group="about">
+        <svg class="rail-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <span>About</span>
+      </button>
+    </nav>
+    <div class="settings-body" id="settingsBody">
+
+      <section class="set-group" id="grp-rhythm" data-group="rhythm">
+        <div class="set-group-head">
+          <span class="set-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+          <div><h3>Rhythm</h3><p>How long each phase runs, and what you're aiming for.</p></div>
+        </div>
+        <p class="set-sub-label">Durations</p>
+        <div class="field"><label>Focus length <span class="val" id="vFocus">25 min</span></label>
+          <div class="stepper" data-key="focus" data-min="5" data-max="60" data-step="5" data-suffix="min" data-val="vFocus">
+            <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease focus length">−</button>
+            <div class="step-bar"><div class="step-fill"></div></div>
+            <button type="button" class="step-btn" data-dir="1" aria-label="Increase focus length">+</button>
+          </div></div>
+        <div class="field"><label>Short break <span class="val" id="vShort">5 min</span></label>
+          <div class="stepper" data-key="short" data-min="1" data-max="20" data-step="1" data-suffix="min" data-val="vShort">
+            <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease short break">−</button>
+            <div class="step-bar"><div class="step-fill"></div></div>
+            <button type="button" class="step-btn" data-dir="1" aria-label="Increase short break">+</button>
+          </div></div>
+        <div class="field"><label>Long break <span class="val" id="vLong">15 min</span></label>
+          <div class="stepper" data-key="long" data-min="5" data-max="40" data-step="5" data-suffix="min" data-val="vLong">
+            <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease long break">−</button>
+            <div class="step-bar"><div class="step-fill"></div></div>
+            <button type="button" class="step-btn" data-dir="1" aria-label="Increase long break">+</button>
+          </div></div>
+        <div class="field"><label>Long break after <span class="val" id="vInterval">4 sessions</span></label>
+          <div class="stepper" data-key="interval" data-min="2" data-max="8" data-step="1" data-suffix="sessions" data-val="vInterval">
+            <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease long break interval">−</button>
+            <div class="step-bar"><div class="step-fill"></div></div>
+            <button type="button" class="step-btn" data-dir="1" aria-label="Increase long break interval">+</button>
+          </div></div>
+        <p class="set-sub-label">Goals</p>
+        <div class="field"><label>Daily goal <span class="val" id="vGoal">8 sessions</span></label>
+          <div class="stepper" data-key="dailyGoal" data-min="1" data-max="16" data-step="1" data-suffix="sessions" data-val="vGoal">
+            <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease daily goal">−</button>
+            <div class="step-bar"><div class="step-fill"></div></div>
+            <button type="button" class="step-btn" data-dir="1" aria-label="Increase daily goal">+</button>
+          </div></div>
+        <div class="field"><label>Weekly goal <span class="val" id="vWeekGoal">40 sessions</span></label>
+          <div class="stepper" data-key="weeklyGoal" data-min="4" data-max="80" data-step="1" data-suffix="sessions" data-val="vWeekGoal">
+            <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease weekly goal">−</button>
+            <div class="step-bar"><div class="step-fill"></div></div>
+            <button type="button" class="step-btn" data-dir="1" aria-label="Increase weekly goal">+</button>
+          </div></div>
+        <div class="field"><label>Monthly goal <span class="val" id="vMonthGoal">160 sessions</span></label>
+          <div class="stepper" data-key="monthlyGoal" data-min="8" data-max="320" data-step="4" data-suffix="sessions" data-val="vMonthGoal">
+            <button type="button" class="step-btn" data-dir="-1" aria-label="Decrease monthly goal">−</button>
+            <div class="step-bar"><div class="step-fill"></div></div>
+            <button type="button" class="step-btn" data-dir="1" aria-label="Increase monthly goal">+</button>
+          </div></div>
+      </section>
+
+      <section class="set-group" id="grp-behavior" data-group="behavior">
+        <div class="set-group-head">
+          <span class="set-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg></span>
+          <div><h3>Behavior</h3><p>How Cadence moves between phases and looks doing it.</p></div>
+        </div>
+        <div class="toggle-row"><span>Auto-start next phase</span><div class="switch" id="switchAuto" role="switch" aria-checked="false"></div></div>
+        <div class="toggle-row"><span>Confirm before skip</span><div class="switch on" id="switchConfirmSkip" role="switch" aria-checked="true"></div></div>
+        <div class="toggle-row"><span>Compact layout</span><div class="switch" id="switchCompact" role="switch" aria-checked="false"></div></div>
+        <div class="toggle-row"><span>Follow system theme</span><div class="switch" id="switchThemeAuto" role="switch" aria-checked="false"></div></div>
+      </section>
+
+      <section class="set-group" id="grp-sound" data-group="sound">
+        <div class="set-group-head">
+          <span class="set-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></span>
+          <div><h3>Sound &amp; haptics</h3><p>What plays and buzzes when a phase ends.</p></div>
+        </div>
+        <div class="toggle-row"><span>Sound on completion</span><div class="switch on" id="switchSound" role="switch" aria-checked="true"></div></div>
+        <div class="field sound-field">
+          <label>Completion sound</label>
+          <div class="sound-picks" id="soundPicks">
+            <button type="button" class="chip on" data-sound="chime">Chime</button>
+            <button type="button" class="chip" data-sound="bell">Bell</button>
+            <button type="button" class="chip" data-sound="wood">Wood</button>
+          </div>
+        </div>
+        <div class="field"><label>Completion volume <span class="val" id="vVolume">Normal</span></label>
+          <div class="stepper" data-key="volume" data-min="1" data-max="3" data-step="1" data-suffix="" data-val="vVolume">
+            <button type="button" class="step-btn" data-dir="-1" aria-label="Quieter">−</button>
+            <div class="step-bar"><div class="step-fill"></div></div>
+            <button type="button" class="step-btn" data-dir="1" aria-label="Louder">+</button>
+          </div></div>
+        <div class="toggle-row"><span>Vibrate on completion</span><div class="switch on" id="switchVibrate" role="switch" aria-checked="true"></div></div>
+        <div class="toggle-row"><span>Desktop notifications</span><div class="switch" id="switchNotify" role="switch" aria-checked="false"></div></div>
+      </section>
+
+      <section class="set-group" id="grp-data" data-group="data">
+        <div class="set-group-head">
+          <span class="set-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg></span>
+          <div><h3>Data</h3><p>Everything stays on this device. Back it up or wipe it.</p></div>
+        </div>
+        <button class="ghost-btn" id="exportBtn" type="button">Export report JSON</button>
+        <button class="ghost-btn" id="exportCsvBtn" type="button">Export sessions CSV</button>
+        <button class="ghost-btn" id="exportTasksCsvBtn" type="button">Export tasks CSV</button>
+        <button class="ghost-btn" id="copyBtn" type="button">Copy data to clipboard</button>
+        <button class="ghost-btn" id="importBtn" type="button">Import JSON</button>
+        <input id="importFile" type="file" accept="application/json" hidden>
+        <button class="ghost-btn danger" id="clearBtn" type="button">Clear all data</button>
+      </section>
+
+      <section class="set-group" id="grp-about" data-group="about">
+        <div class="set-group-head">
+          <span class="set-group-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
+          <div><h3>About</h3><p>Reference and a reminder of how this app works.</p></div>
+        </div>
+        <button class="ghost-btn" id="shortcutsBtn" type="button">Keyboard shortcuts</button>
+        <button class="ghost-btn" id="tourReplay" type="button">Replay welcome tour</button>
+        <button class="ghost-btn" id="whatsNewBtn" type="button">What's new</button>
+      </section>
+
     </div>
-  </div>
-  <div class="field"><label>Completion volume <span class="val" id="vVolume">Normal</span></label>
-    <div class="stepper" data-key="volume" data-min="1" data-max="3" data-step="1" data-suffix="" data-val="vVolume">
-      <button type="button" class="step-btn" data-dir="-1" aria-label="Quieter">−</button>
-      <div class="step-bar"><div class="step-fill"></div></div>
-      <button type="button" class="step-btn" data-dir="1" aria-label="Louder">+</button>
-    </div></div>
-  <div class="toggle-row"><span>Follow system theme</span><div class="switch" id="switchThemeAuto" role="switch" aria-checked="false"></div></div>
-  <div class="toggle-row"><span>Compact layout</span><div class="switch" id="switchCompact" role="switch" aria-checked="false"></div></div>
-  <div class="toggle-row"><span>Confirm before skip</span><div class="switch on" id="switchConfirmSkip" role="switch" aria-checked="true"></div></div>
-  <div class="toggle-row"><span>Vibrate on completion</span><div class="switch on" id="switchVibrate" role="switch" aria-checked="true"></div></div>
-  <div class="toggle-row"><span>Desktop notifications</span><div class="switch" id="switchNotify" role="switch" aria-checked="false"></div></div>
-  <p class="sub section-label">Data</p>
-  <button class="ghost-btn" id="exportBtn" type="button">Export report JSON</button>
-  <button class="ghost-btn" id="exportCsvBtn" type="button">Export sessions CSV</button>
-  <button class="ghost-btn" id="exportTasksCsvBtn" type="button">Export tasks CSV</button>
-  <button class="ghost-btn" id="copyBtn" type="button">Copy data to clipboard</button>
-  <button class="ghost-btn" id="importBtn" type="button">Import JSON</button>
-  <input id="importFile" type="file" accept="application/json" hidden>
-  <button class="ghost-btn danger" id="clearBtn" type="button">Clear all data</button>
-  <p class="sub section-label">App</p>
-  <button class="ghost-btn" id="shortcutsBtn" type="button">Keyboard shortcuts</button>
-  <button class="ghost-btn" id="tourReplay" type="button">Replay welcome tour</button>
-  <button class="ghost-btn" id="whatsNewBtn" type="button">What's new</button>
   </div>
   <div class="settings-foot">
     <button type="button" class="drawer-close" id="closeDrawerBottom">Done</button>
