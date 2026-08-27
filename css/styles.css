@@ -1391,8 +1391,10 @@ body.compact .page-head { margin-bottom: var(--space-4); }
     max-width: none;
     width: auto;
     background: var(--surface);
-    padding: 22px 28px 180px;
+    padding: 24px 28px;
   }
+  .set-group { display: none; margin-bottom: 0; }
+  .set-group.active { display: block; animation: pageInSoft 0.2s var(--ease); }
   .set-group {
     background: var(--surface-2);
   }

@@ -1595,42 +1595,20 @@
   const settingsBody = $("settingsBody");
   const railItems = Array.from(document.querySelectorAll(".rail-item"));
   const settingsGroups = Array.from(document.querySelectorAll(".set-group"));
-  function setActiveRail(name) {
-    railItems.forEach((btn) => btn.classList.toggle("active", btn.dataset.group === name));
-  }
-  let settingsScrollLocked = false;
-  function settingsScrollSpy() {
-    if (!settingsBody || !settingsGroups.length || settingsScrollLocked) return;
-    const isBottom = settingsBody.scrollHeight - settingsBody.scrollTop <= settingsBody.clientHeight + 24;
-    if (isBottom) {
-      setActiveRail(settingsGroups[settingsGroups.length - 1].dataset.group);
-      return;
-    }
-    const bodyRect = settingsBody.getBoundingClientRect();
-    let current = settingsGroups[0];
-    settingsGroups.forEach((g) => {
-      if (g.getBoundingClientRect().top - bodyRect.top <= 48) current = g;
-    });
-    setActiveRail(current.dataset.group);
+  function switchSettingsTab(groupName) {
+    railItems.forEach((btn) => btn.classList.toggle("active", btn.dataset.group === groupName));
+    settingsGroups.forEach((g) => g.classList.toggle("active", g.dataset.group === groupName));
+    if (settingsBody) settingsBody.scrollTop = 0;
   }
   railItems.forEach((btn) => {
-    btn.onclick = () => {
-      const target = $("grp-" + btn.dataset.group);
-      if (target && settingsBody) {
-        settingsScrollLocked = true;
-        settingsBody.scrollTo({ top: target.offsetTop - settingsBody.offsetTop - 8, behavior: "smooth" });
-        setActiveRail(btn.dataset.group);
-        setTimeout(() => { settingsScrollLocked = false; }, 400);
-      }
-    };
+    btn.onclick = () => switchSettingsTab(btn.dataset.group);
   });
-  if (settingsBody) settingsBody.addEventListener("scroll", settingsScrollSpy, { passive: true });
   function openDrawer() {
     drawer.classList.add("open");
     backdrop.classList.add("open");
     document.body.style.overflow = "hidden";
     if (settingsBody) settingsBody.scrollTop = 0;
-    setActiveRail("rhythm");
+    switchSettingsTab("rhythm");
   }
   function shutDrawer() {
     drawer.classList.remove("open");
