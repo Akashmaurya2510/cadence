@@ -1081,6 +1081,8 @@ body.zen .site-footer { display: none !important; }
 .accent-dot.on {
   box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text);
 }
+.accent-dot[data-accent="default"] { display: flex; align-items: center; justify-content: center; }
+.accent-default-mark { font-size: 13px; line-height: 1; color: var(--work-ink); pointer-events: none; }
 #themeBtn {
   color: var(--accent, var(--work));
   border-color: color-mix(in oklab, var(--accent, var(--work)) 35%, var(--border));
