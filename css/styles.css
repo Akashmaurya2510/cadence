@@ -755,6 +755,11 @@ input[type="range"] { width: 100%; max-width: 100%; accent-color: var(--accent);
 }
 .tour-actions { display: flex; gap: 10px; margin-top: var(--space-2); }
 .tour-actions .ghost-btn, .tour-actions .drawer-close { width: auto; flex: 1; margin-top: 0; }
+/* .modal .box scrolls (overflow: auto) for long content, which clips any shadow that
+   extends past its edge into a hard rectangular seam instead of a soft fade — most
+   visible on light themes. The buttons don't need the glow to read as primary actions,
+   so drop it here rather than fight the clipping. */
+.modal .tour-actions .drawer-close { box-shadow: none; }
 .change-list { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-4); }
 .change-item { display: flex; gap: var(--space-3); align-items: flex-start; font-size: 14px; line-height: 1.45; }
 .change-tag {
@@ -1080,8 +1085,6 @@ body.zen .site-footer { display: none !important; }
 .accent-dot.on {
   box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text);
 }
-.accent-dot[data-accent="default"] { display: flex; align-items: center; justify-content: center; }
-.accent-default-mark { font-size: 13px; line-height: 1; color: var(--work-ink); pointer-events: none; }
 #themeBtn {
   color: var(--accent, var(--work));
   border-color: color-mix(in oklab, var(--accent, var(--work)) 35%, var(--border));
@@ -1268,6 +1271,7 @@ body.compact .page-head { margin-bottom: var(--space-4); }
   }
   .settings-body {
     max-height: min(70vh, 640px);
+    max-width: 480px;
     background: var(--surface);
   }
   .settings-foot {

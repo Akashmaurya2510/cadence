@@ -7,52 +7,10 @@
   const LOG_PAGE = 40;
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
-  // Each theme's native --work color, used only for the "Theme default" accent dot preview.
-  // Read from here (not the live --work CSS var) since an active accent override rewrites
-  // that variable — this map stays correct no matter what override is currently applied.
-  const THEME_WORK = { graphite: "#e7b54a", linen: "#b4552e", glacier: "#5ec8e8", espresso: "#d97b4f", oled: "#ff5470", aurora: "#4ee6a8" };
-  const THEME_WORK_INK = { graphite: "#171308", linen: "#fff6f1", glacier: "#051820", espresso: "#1a0d06", oled: "#170307", aurora: "#04140d" };
 
-  const APP_VERSION = "1.0.4";
+  const APP_VERSION = "1.0.0";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
-    {
-      version: "1.0.4",
-      date: "August 2026",
-      title: "Cadence 1.0.4",
-      blurb: "Fix the Theme default accent dot actually changing color when you pick an accent.",
-      items: [
-        { tag: "Fix", text: "The 'Theme default' dot now always shows the current theme's real color, even while an accent override (Coral, Sky, etc.) is active — it no longer morphs into a duplicate of whatever you selected." },
-      ],
-    },
-    {
-      version: "1.0.3",
-      date: "August 2026",
-      title: "Cadence 1.0.3",
-      blurb: "More reliable completion sound; faster font load.",
-      items: [
-        { tag: "Fix", text: "The completion sound is now warmed up on Start (a real tap) instead of first touched minutes later from a background timer, which could fail silently after a long screen-lock." },
-        { tag: "Polish", text: "Fonts now load via a proper link tag instead of a render-blocking CSS import." },
-      ],
-    },
-    {
-      version: "1.0.2",
-      date: "August 2026",
-      title: "Cadence 1.0.2",
-      blurb: "Fix a visual seam in the What's new popup.",
-      items: [
-        { tag: "Fix", text: "The Okay button's footer no longer shows a mismatched solid-white box against the frosted-glass popup, especially visible on light themes." },
-      ],
-    },
-    {
-      version: "1.0.1",
-      date: "August 2026",
-      title: "Cadence 1.0.1",
-      blurb: "Small clarity fix in the theme popover.",
-      items: [
-        { tag: "Polish", text: "The 'Theme default' accent dot now shows a ✦ mark so it's clear it's meant to shift with your theme, not a fixed color glitch." },
-      ],
-    },
     {
       version: "1.0.0",
       date: "August 2026",
@@ -71,10 +29,10 @@
     dailyGoal: 8, weeklyGoal: 40, monthlyGoal: 160,
     autoStart: false, sound: true, notify: false, tickSound: false,
     vibrate: true, soundChoice: "chime", volume: 2, tickVolume: 2, themeAuto: false,
-    accent: "default", compact: false, confirmSkip: true, muted: false,
+    accent: "sage", compact: false, confirmSkip: true, muted: false,
   };
   const ACCENTS = {
-    default: null,
+    sage:   { work: "#8aab74", soft: "rgba(138,171,116,0.16)", ink: "#0d150a" },
     amber:  { work: "#e7b54a", soft: "rgba(231,181,74,0.16)", ink: "#171308" },
     coral:  { work: "#ff6b4a", soft: "rgba(255,107,74,0.16)", ink: "#1a0a06" },
     mint:   { work: "#3dcfb6", soft: "rgba(61,207,182,0.14)", ink: "#03140f" },
@@ -251,7 +209,7 @@
       if (settings.volume == null) settings.volume = 2;
       if (settings.tickVolume == null) settings.tickVolume = 2;
       if (settings.themeAuto == null) settings.themeAuto = false;
-      if (!settings.accent) settings.accent = "default";
+      if (!settings.accent) settings.accent = "sage";
       if (settings.compact == null) settings.compact = false;
       if (settings.confirmSkip == null) settings.confirmSkip = true;
       if (settings.muted == null) settings.muted = false;
@@ -542,14 +500,8 @@
       else c.classList.toggle("on", !settings.themeAuto && c.dataset.t === state.theme);
     });
     document.querySelectorAll(".accent-dot").forEach((d) => {
-      d.classList.toggle("on", d.dataset.accent === (settings.accent || "default"));
+      d.classList.toggle("on", d.dataset.accent === (settings.accent || "sage"));
     });
-    const defaultDot = $("accentDefaultDot");
-    if (defaultDot) {
-      defaultDot.style.background = THEME_WORK[state.theme] || THEME_WORK.graphite;
-      const mark = defaultDot.querySelector(".accent-default-mark");
-      if (mark) mark.style.color = THEME_WORK_INK[state.theme] || THEME_WORK_INK.graphite;
-    }
     if ($("switchThemeAuto")) {
       $("switchThemeAuto").classList.toggle("on", !!settings.themeAuto);
       $("switchThemeAuto").setAttribute("aria-checked", settings.themeAuto ? "true" : "false");
@@ -1559,7 +1511,7 @@
   document.querySelectorAll(".accent-dot").forEach((d) => {
     d.onclick = (e) => {
       e.stopPropagation();
-      settings.accent = d.dataset.accent || "default";
+      settings.accent = d.dataset.accent || "sage";
       applyAccent();
       syncThemeUI();
       save();
