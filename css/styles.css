@@ -1475,7 +1475,7 @@ body.zen.zen-controls .controls {
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid var(--border);
-  background: var(--surface);
+  background: color-mix(in oklab, var(--surface) 84%, transparent);
 }
 .changelog-actions .drawer-close {
   width: 100%;

@@ -8,9 +8,18 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.0.1";
+  const APP_VERSION = "1.0.2";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.0.2",
+      date: "August 2026",
+      title: "Cadence 1.0.2",
+      blurb: "Fix a visual seam in the What's new popup.",
+      items: [
+        { tag: "Fix", text: "The Okay button's footer no longer shows a mismatched solid-white box against the frosted-glass popup, especially visible on light themes." },
+      ],
+    },
     {
       version: "1.0.1",
       date: "August 2026",
