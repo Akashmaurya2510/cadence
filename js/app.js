@@ -2277,7 +2277,7 @@
     tourIndex++; renderTourStep();
   };
   $("tourSkip").onclick = finishTour;
-  $("tourReplay").onclick = () => { shutDrawer(); startTour(true); };
+  $("tourReplay").addEventListener("click", () => { shutDrawer(); startTour(true); });
 
   function unseenChangelog() {
     const seen = localStorage.getItem(CHANGELOG_SEEN_KEY);
@@ -2320,14 +2320,14 @@
     localStorage.setItem(CHANGELOG_SEEN_KEY, APP_VERSION);
     $("changelogModal").classList.remove("open");
   }
-  $("changeOk").onclick = dismissChangelog;
-  if ($("changeCloseX")) $("changeCloseX").onclick = dismissChangelog;
-  $("whatsNewBtn").onclick = () => { shutDrawer(); openChangelog(true); };
+  $("changeOk").addEventListener("click", dismissChangelog);
+  if ($("changeCloseX")) $("changeCloseX").addEventListener("click", dismissChangelog);
+  $("whatsNewBtn").addEventListener("click", () => { shutDrawer(); openChangelog(true); });
   if ($("footerUpdated")) {
-    $("footerUpdated").onclick = () => openChangelog(true);
+    $("footerUpdated").addEventListener("click", () => openChangelog(true));
   }
 
-  $("pngBtn").onclick = () => exportReportPng();
+  $("pngBtn").addEventListener("click", () => exportReportPng());
 
   function exportReportPng() {
     const canvas = document.createElement("canvas");
