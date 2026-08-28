@@ -57,17 +57,17 @@
           </div>
           <div class="theme-section-label">Accent</div>
           <div class="accent-row" id="accentRow">
-            <button type="button" class="accent-dot on" data-accent="sage" title="Sage" style="background:#8aab74"></button>
-            <button type="button" class="accent-dot" data-accent="amber" title="Amber" style="background:#e7b54a"></button>
-            <button type="button" class="accent-dot" data-accent="coral" title="Coral" style="background:#ff6b4a"></button>
-            <button type="button" class="accent-dot" data-accent="mint" title="Mint" style="background:#3dcfb6"></button>
-            <button type="button" class="accent-dot" data-accent="violet" title="Violet" style="background:#8c7ae6"></button>
-            <button type="button" class="accent-dot" data-accent="rose" title="Rose" style="background:#ff5470"></button>
-            <button type="button" class="accent-dot" data-accent="sky" title="Sky" style="background:#4aa3ff"></button>
+            <button type="button" class="accent-dot on" data-accent="sage" aria-label="Select Sage accent" style="background:#8aab74"></button>
+            <button type="button" class="accent-dot" data-accent="amber" aria-label="Select Amber accent" style="background:#e7b54a"></button>
+            <button type="button" class="accent-dot" data-accent="coral" aria-label="Select Coral accent" style="background:#ff6b4a"></button>
+            <button type="button" class="accent-dot" data-accent="mint" aria-label="Select Mint accent" style="background:#3dcfb6"></button>
+            <button type="button" class="accent-dot" data-accent="violet" aria-label="Select Violet accent" style="background:#8c7ae6"></button>
+            <button type="button" class="accent-dot" data-accent="rose" aria-label="Select Rose accent" style="background:#ff5470"></button>
+            <button type="button" class="accent-dot" data-accent="sky" aria-label="Select Sky accent" style="background:#4aa3ff"></button>
           </div>
         </div>
       </div>
-      <button class="icon-btn" id="settingsBtn" aria-label="Open settings" title="Settings">
+      <button class="icon-btn" id="settingsBtn" aria-label="Open settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
     </div>
@@ -456,5 +456,19 @@
 </footer>
 
 <script src="js/app.js"></script>
+  <div class="modal" id="shortcutsModal" aria-hidden="true" aria-modal="true" role="dialog" aria-label="Keyboard shortcuts">
+    <div class="modal-content">
+      <div class="modal-head"><span>Shortcuts</span><button type="button" class="modal-close" id="shortcutsClose">×</button></div>
+      <div class="shortcut-list">
+        <div><span>Space</span> Start / pause</div>
+        <div><span>R</span> Reset</div>
+        <div><span>N</span> Skip</div>
+        <div><span>1/2/3</span> Focus/short/long</div>
+        <div><span>T</span> Task input</div>
+        <div><span>Shift+E</span> Export</div>
+        <div><span>Esc</span> Close</div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

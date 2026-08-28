@@ -198,8 +198,13 @@
       badgesUnlocked: state.badgesUnlocked,
     };
   }
+  let lastSavedSnapshot = null;
   function save() {
-    localStorage.setItem(KEY, JSON.stringify(snapshot()));
+    const currentSnapshot = snapshot();
+    const serialized = JSON.stringify(currentSnapshot);
+    if (serialized === lastSavedSnapshot) return;
+    localStorage.setItem(KEY, serialized);
+    lastSavedSnapshot = serialized;
   }
   function load() {
     try {
@@ -1450,6 +1455,9 @@
     }
   }
   function startTimer() {
+    if (settings.notify && typeof Notification !== "undefined" && Notification.permission === "default") {
+        Notification.requestPermission();
+    }
     state.running = true;
     state.endsAt = Date.now() + state.secondsLeft * 1000;
     clearInterval(state.timerId);
@@ -1662,7 +1670,7 @@
     if (settingsBody) settingsBody.scrollTop = 0;
   }
   railItems.forEach((btn) => {
-    btn.onclick = () => switchSettingsTab(btn.dataset.group);
+    btn.addEventListener("click", () => switchSettingsTab(btn.dataset.group));
   });
   function openDrawer() {
     drawer.classList.add("open");
@@ -1676,10 +1684,10 @@
     backdrop.classList.remove("open");
     document.body.style.overflow = "";
   }
-  $("settingsBtn").onclick = openDrawer;
-  $("closeDrawer").onclick = shutDrawer;
-  if ($("closeDrawerBottom")) $("closeDrawerBottom").onclick = shutDrawer;
-  backdrop.onclick = shutDrawer;
+  $("settingsBtn").addEventListener("click", openDrawer);
+  $("closeDrawer").addEventListener("click", shutDrawer);
+  if ($("closeDrawerBottom")) $("closeDrawerBottom").addEventListener("click", shutDrawer);
+  backdrop.addEventListener("click", shutDrawer);
 
   function refreshStepper(el) {
     const key = el.dataset.key, min = +el.dataset.min, max = +el.dataset.max, suffix = el.dataset.suffix;
@@ -1976,7 +1984,15 @@
         localStorage.setItem(k, serialized);
         count++;
       });
+      // Storage now has the restored data, but in-memory state/settings are still
+      // the old values — stop any running timer, then reload from storage before
+      // re-rendering, or the UI would keep showing the pre-restore data.
+      clearInterval(state.timerId);
+      state.running = false;
+      state.endsAt = null;
+      load();
       try { renderAll(); } catch (err) { /* ignore */ }
+      resumeTimerIfNeeded();
       toast("Restored " + count + " entr" + (count === 1 ? "y" : "ies") + " from backup");
     } catch (err) {
       toast("Could not import — not a valid Cadence backup");
@@ -2033,10 +2049,10 @@
     const tag = document.activeElement && document.activeElement.tagName;
     const typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
     if (e.key === "Escape") { closeTopModal(); return; }
-    if (e.shiftKey && e.key === "E") { e.preventDefault(); $("exportBtn").click(); return; }
     if (typing) return;
+    if (e.shiftKey && e.key === "E") { e.preventDefault(); $("exportBtn").click(); return; }
     if (e.code === "Space") { e.preventDefault(); $("playBtn").click(); }
-    if (e.key === "?") { e.preventDefault(); $("helpModal").classList.toggle("open"); }
+    if (e.key === "?") { e.preventDefault(); $("shortcutsModal").classList.toggle("open"); }
     /* shortcuts also in Settings */
     if (e.key === ",") { e.preventDefault(); openDrawer(); }
     const k = e.key.toLowerCase();
@@ -2047,6 +2063,7 @@
     if (k === "2") switchMode("short");
     if (k === "3") switchMode("long");
   });
+  $("shortcutsClose").addEventListener("click", () => $("shortcutsModal").classList.remove("open"));
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       stopTitleFlash();
@@ -2268,7 +2285,7 @@
     tourIndex++; renderTourStep();
   };
   $("tourSkip").onclick = finishTour;
-  $("tourReplay").onclick = () => { shutDrawer(); startTour(true); };
+  $("tourReplay").addEventListener("click", () => { shutDrawer(); startTour(true); });
 
   function unseenChangelog() {
     const seen = localStorage.getItem(CHANGELOG_SEEN_KEY);
@@ -2311,14 +2328,14 @@
     localStorage.setItem(CHANGELOG_SEEN_KEY, APP_VERSION);
     $("changelogModal").classList.remove("open");
   }
-  $("changeOk").onclick = dismissChangelog;
-  if ($("changeCloseX")) $("changeCloseX").onclick = dismissChangelog;
-  $("whatsNewBtn").onclick = () => { shutDrawer(); openChangelog(true); };
+  $("changeOk").addEventListener("click", dismissChangelog);
+  if ($("changeCloseX")) $("changeCloseX").addEventListener("click", dismissChangelog);
+  $("whatsNewBtn").addEventListener("click", () => { shutDrawer(); openChangelog(true); });
   if ($("footerUpdated")) {
-    $("footerUpdated").onclick = () => openChangelog(true);
+    $("footerUpdated").addEventListener("click", () => openChangelog(true));
   }
 
-  $("pngBtn").onclick = () => exportReportPng();
+  $("pngBtn").addEventListener("click", () => exportReportPng());
 
   function exportReportPng() {
     const canvas = document.createElement("canvas");
