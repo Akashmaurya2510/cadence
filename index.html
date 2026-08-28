@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="graphite">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -9,6 +9,26 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
+  <script>
+    (function () {
+      try {
+        var THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
+        var raw = localStorage.getItem("cadence-v1-static");
+        var d = raw ? JSON.parse(raw) : null;
+        var theme = "graphite";
+        if (d && d.settings && d.settings.themeAuto) {
+          theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "graphite" : "linen";
+        } else if (d && d.theme) {
+          theme = d.theme;
+        }
+        document.documentElement.setAttribute("data-theme", theme);
+        var color = THEME_COLORS[theme] || "#15171b";
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", color);
+        document.documentElement.style.background = color;
+      } catch (e) {}
+    })();
+  </script>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
