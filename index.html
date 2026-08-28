@@ -450,25 +450,26 @@
   <button type="button" id="toastAction">Undo</button>
 </div>
 
+<div class="modal" id="shortcutsModal" aria-hidden="true" aria-modal="true" role="dialog" aria-label="Keyboard shortcuts">
+  <div class="modal-content">
+    <div class="modal-head"><span>Shortcuts</span><button type="button" class="modal-close" id="shortcutsClose">×</button></div>
+    <div class="shortcut-list">
+      <div><span>Space</span> Start / pause</div>
+      <div><span>R</span> Reset</div>
+      <div><span>N</span> Skip</div>
+      <div><span>1/2/3</span> Focus/short/long</div>
+      <div><span>T</span> Task input</div>
+      <div><span>Shift+E</span> Export</div>
+      <div><span>Esc</span> Close</div>
+    </div>
+  </div>
+</div>
+
 <footer class="site-footer">
   <p class="footer-line">Built with ❤️ by Akash Maurya</p>
   <button type="button" class="footer-updated" id="footerUpdated">Last updated: Aug 26, 2026</button>
 </footer>
 
-<script src="js/app.js"></script>
-  <div class="modal" id="shortcutsModal" aria-hidden="true" aria-modal="true" role="dialog" aria-label="Keyboard shortcuts">
-    <div class="modal-content">
-      <div class="modal-head"><span>Shortcuts</span><button type="button" class="modal-close" id="shortcutsClose">×</button></div>
-      <div class="shortcut-list">
-        <div><span>Space</span> Start / pause</div>
-        <div><span>R</span> Reset</div>
-        <div><span>N</span> Skip</div>
-        <div><span>1/2/3</span> Focus/short/long</div>
-        <div><span>T</span> Task input</div>
-        <div><span>Shift+E</span> Export</div>
-        <div><span>Esc</span> Close</div>
-      </div>
-    </div>
-  </div>
+<script src="js/app.js" defer></script>
 </body>
 </html>

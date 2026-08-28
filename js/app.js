@@ -1984,7 +1984,15 @@
         localStorage.setItem(k, serialized);
         count++;
       });
+      // Storage now has the restored data, but in-memory state/settings are still
+      // the old values — stop any running timer, then reload from storage before
+      // re-rendering, or the UI would keep showing the pre-restore data.
+      clearInterval(state.timerId);
+      state.running = false;
+      state.endsAt = null;
+      load();
       try { renderAll(); } catch (err) { /* ignore */ }
+      resumeTimerIfNeeded();
       toast("Restored " + count + " entr" + (count === 1 ? "y" : "ies") + " from backup");
     } catch (err) {
       toast("Could not import — not a valid Cadence backup");
@@ -2041,8 +2049,8 @@
     const tag = document.activeElement && document.activeElement.tagName;
     const typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
     if (e.key === "Escape") { closeTopModal(); return; }
-    if (e.shiftKey && e.key === "E") { e.preventDefault(); $("exportBtn").click(); return; }
     if (typing) return;
+    if (e.shiftKey && e.key === "E") { e.preventDefault(); $("exportBtn").click(); return; }
     if (e.code === "Space") { e.preventDefault(); $("playBtn").click(); }
     if (e.key === "?") { e.preventDefault(); $("shortcutsModal").classList.toggle("open"); }
     /* shortcuts also in Settings */
