@@ -80,7 +80,7 @@ For GitHub Pages, enable Pages on the branch that has `index.html` at the repo r
 
 ## Backup
 
-Settings → **Export report JSON**, **Export sessions CSV**, **Export tasks CSV**, or **Copy data to clipboard**. Import JSON to restore. Cadence nudges you if you have history and have not exported in a while.
+Settings → **Export Backup JSON** to save everything, **Import Backup JSON** to restore it (overwrites this device's data). Cadence nudges you if you have history and have not exported in a while.
 
 ## Shipping a new version
 

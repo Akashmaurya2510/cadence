@@ -762,27 +762,6 @@ input[type="range"] { width: 100%; max-width: 100%; accent-color: var(--accent);
   margin-bottom: 4px;
   opacity: 0.75;
 }
-.backup-divider {
-  position: relative;
-  text-align: center;
-  margin: 8px 0;
-}
-.backup-divider::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--border);
-}
-.backup-divider span {
-  position: relative;
-  background: var(--surface-2);
-  padding: 0 8px;
-  font-size: 11px;
-  color: var(--text-dim);
-}
 .btn-hint {
   display: block;
   font-family: var(--font-sans);

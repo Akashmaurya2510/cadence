@@ -1796,136 +1796,12 @@
     };
   });
 
-  function exportPayload() {
-    return {
-      version: APP_VERSION,
-      exportedAt: new Date().toISOString(),
-      settings, theme: state.theme, tasks: state.tasks, sessions: state.sessions, focusCount: state.focusCount,
-    };
-  }
   function markExported() {
     state.lastExportAt = Date.now();
     save();
     if (state.page === "reports") renderReports();
   }
-  $("exportBtn").onclick = () => {
-    const blob = new Blob([JSON.stringify(exportPayload(), null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "cadence-data.json";
-    a.click();
-    markExported();
-    toast("Exported JSON");
-  };
-  function exportCsv() {
-    const rows = [["id", "mode", "startedAt", "endedAt", "durationSec", "completed", "task", "note"]];
-    state.sessions.slice().sort((a, b) => a.endedAt - b.endedAt).forEach((s) => {
-      const task = state.tasks.find((t) => t.id === s.taskId);
-      const esc = (v) => {
-        const str = v == null ? "" : String(v);
-        return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
-      };
-      rows.push([
-        s.id, s.mode,
-        new Date(s.startedAt).toISOString(),
-        new Date(s.endedAt).toISOString(),
-        s.durationSec, s.completed ? "1" : "0",
-        task ? task.title : "",
-        s.note || "",
-      ].map(esc));
-    });
-    const blob = new Blob([rows.map((r) => r.join(",")).join("\n")], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "cadence-sessions.csv";
-    a.click();
-    markExported();
-    toast("Exported CSV");
-  }
-  if ($("exportCsvBtn")) $("exportCsvBtn").onclick = exportCsv;
-  function exportTasksCsv() {
-    const rows = [["id", "title", "done", "archived", "due", "pomodoros", "target", "focusMinOverride"]];
-    const esc = (v) => {
-      const str = v == null ? "" : String(v);
-      return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
-    };
-    state.tasks.forEach((t) => {
-      rows.push([
-        t.id, t.title, t.done ? "1" : "0", t.archived ? "1" : "0",
-        t.due || "", t.pomodoros || 0, t.target || 0, t.focusMin || "",
-      ].map(esc));
-    });
-    const blob = new Blob([rows.map((r) => r.join(",")).join("\n")], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "cadence-tasks.csv";
-    a.click();
-    toast("Exported tasks CSV");
-  }
-  if ($("exportTasksCsvBtn")) $("exportTasksCsvBtn").onclick = exportTasksCsv;
-  $("copyBtn").onclick = async () => {
-    const text = JSON.stringify(exportPayload(), null, 2);
-    try {
-      await navigator.clipboard.writeText(text);
-      markExported();
-      toast("Copied to clipboard");
-    } catch (e) {
-      const ta = document.createElement("textarea");
-      ta.value = text; document.body.appendChild(ta); ta.select();
-      try { document.execCommand("copy"); markExported(); toast("Copied to clipboard"); }
-      catch (err) { toast("Could not copy"); }
-      ta.remove();
-    }
-  };
-  $("nudgeExport").onclick = () => $("exportBtn").click();
-  $("importBtn").onclick = () => $("importFile").click();
-  $("importFile").onchange = async (e) => {
-    const file = e.target.files[0]; e.target.value = "";
-    if (!file) return;
-    const backup = snapshot();
-    try {
-      const d = JSON.parse(await file.text());
-      if (!Array.isArray(d.sessions) || !Array.isArray(d.tasks)) throw new Error("bad");
-      const incomingSessions = d.sessions.filter(isValidSession);
-      const incomingTasks = d.tasks.filter(isValidTask).map(normalizeTask);
-      if (!incomingSessions.length && d.sessions.length) throw new Error("shape");
-
-      // A brand-new device with nothing recorded yet acts like a full restore
-      // (settings and theme come along too). Once there's real data here,
-      // importing only ever adds to it — this device's settings stay put.
-      const isFreshDevice = state.sessions.length === 0 && state.tasks.length === 0;
-
-      const sMerge = mergeSessions(state.sessions, incomingSessions);
-      const tMerge = mergeTasks(state.tasks, incomingTasks);
-      state.sessions = sMerge.sessions;
-      state.tasks = tMerge.tasks;
-      if (Array.isArray(d.badgesUnlocked)) {
-        state.badgesUnlocked = Array.from(new Set([...(state.badgesUnlocked || []), ...d.badgesUnlocked]));
-      }
-      state.auroraUnlocked = !!state.auroraUnlocked || !!d.auroraUnlocked;
-      if (isFreshDevice) {
-        Object.assign(settings, d.settings || {});
-        state.theme = d.theme || state.theme;
-        state.focusCount = d.focusCount || 0;
-      }
-      state.demo = false;
-      renderAll();
-      save();
-      const parts = [];
-      if (sMerge.added) parts.push(sMerge.added + " new session" + (sMerge.added === 1 ? "" : "s"));
-      if (tMerge.added) parts.push(tMerge.added + " new task" + (tMerge.added === 1 ? "" : "s"));
-      toast(parts.length ? "Merged — added " + parts.join(", ") : "Merged — nothing new to add");
-    } catch (err) {
-      Object.assign(settings, backup.settings);
-      state.tasks = backup.tasks;
-      state.sessions = backup.sessions;
-      state.theme = backup.theme;
-      state.focusCount = backup.focusCount;
-      state.demo = backup.demo;
-      try { renderAll(); } catch (e2) { /* ignore */ }
-      toast("Could not import that file — existing data kept");
-    }
-  };
+  $("nudgeExport").onclick = () => $("backupExportBtn").click();
 
   $("backupExportBtn").onclick = () => {
     try {
@@ -1954,6 +1830,7 @@
       a.download = filename;
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      markExported();
       toast("Backup saved — " + filename);
     } catch (e) { toast("Could not save backup"); }
   };
@@ -2049,7 +1926,7 @@
     const typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
     if (e.key === "Escape") { closeTopModal(); return; }
     if (typing) return;
-    if (e.shiftKey && e.key === "E") { e.preventDefault(); $("exportBtn").click(); return; }
+    if (e.shiftKey && e.key === "E") { e.preventDefault(); $("backupExportBtn").click(); return; }
     if (e.code === "Space") { e.preventDefault(); $("playBtn").click(); }
     if (e.key === "?") { e.preventDefault(); $("shortcutsModal").classList.toggle("open"); }
     /* shortcuts also in Settings */
