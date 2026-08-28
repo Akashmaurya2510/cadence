@@ -198,8 +198,13 @@
       badgesUnlocked: state.badgesUnlocked,
     };
   }
+  let lastSavedSnapshot = null;
   function save() {
-    localStorage.setItem(KEY, JSON.stringify(snapshot()));
+    const currentSnapshot = snapshot();
+    const serialized = JSON.stringify(currentSnapshot);
+    if (serialized === lastSavedSnapshot) return;
+    localStorage.setItem(KEY, serialized);
+    lastSavedSnapshot = serialized;
   }
   function load() {
     try {
@@ -1450,6 +1455,9 @@
     }
   }
   function startTimer() {
+    if (settings.notify && typeof Notification !== "undefined" && Notification.permission === "default") {
+        Notification.requestPermission();
+    }
     state.running = true;
     state.endsAt = Date.now() + state.secondsLeft * 1000;
     clearInterval(state.timerId);
@@ -2036,7 +2044,7 @@
     if (e.shiftKey && e.key === "E") { e.preventDefault(); $("exportBtn").click(); return; }
     if (typing) return;
     if (e.code === "Space") { e.preventDefault(); $("playBtn").click(); }
-    if (e.key === "?") { e.preventDefault(); $("helpModal").classList.toggle("open"); }
+    if (e.key === "?") { e.preventDefault(); $("shortcutsModal").classList.toggle("open"); }
     /* shortcuts also in Settings */
     if (e.key === ",") { e.preventDefault(); openDrawer(); }
     const k = e.key.toLowerCase();
@@ -2047,6 +2055,7 @@
     if (k === "2") switchMode("short");
     if (k === "3") switchMode("long");
   });
+  $("shortcutsClose").addEventListener("click", () => $("shortcutsModal").classList.remove("open"));
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       stopTitleFlash();
