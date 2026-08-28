@@ -1,15 +1,8 @@
-/* Keyboard Shortcut Modal */
-.modal {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center;
-  z-index: 1000;
-}
-.modal.open { display: flex; }
+/* Keyboard Shortcut Modal (uses the shared .modal / .modal-head rules below) */
 .modal-content {
   background: var(--surface); padding: var(--space-5); border-radius: var(--radius-lg);
   width: 90%; max-width: 320px; box-shadow: var(--shadow-lg);
 }
-.modal-head { display: flex; justify-content: space-between; margin-bottom: var(--space-4); font-weight: 600; color: var(--text); }
 .shortcut-list { display: grid; gap: var(--space-2); font-size: 0.9rem; color: var(--text-dim); }
 .shortcut-list div { display: flex; justify-content: space-between; align-items: center; }
 .shortcut-list span { font-family: var(--font-mono); background: var(--surface-3); padding: 2px 6px; border-radius: var(--radius-sm); color: var(--text); }
@@ -1338,6 +1331,8 @@ body.compact .page-head { margin-bottom: var(--space-4); }
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 4px;
+  font-weight: 600;
+  color: var(--text);
 }
 .modal-x {
   width: 36px;
