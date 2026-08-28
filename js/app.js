@@ -1670,7 +1670,7 @@
     if (settingsBody) settingsBody.scrollTop = 0;
   }
   railItems.forEach((btn) => {
-    btn.onclick = () => switchSettingsTab(btn.dataset.group);
+    btn.addEventListener("click", () => switchSettingsTab(btn.dataset.group));
   });
   function openDrawer() {
     drawer.classList.add("open");
@@ -1684,10 +1684,10 @@
     backdrop.classList.remove("open");
     document.body.style.overflow = "";
   }
-  $("settingsBtn").onclick = openDrawer;
-  $("closeDrawer").onclick = shutDrawer;
-  if ($("closeDrawerBottom")) $("closeDrawerBottom").onclick = shutDrawer;
-  backdrop.onclick = shutDrawer;
+  $("settingsBtn").addEventListener("click", openDrawer);
+  $("closeDrawer").addEventListener("click", shutDrawer);
+  if ($("closeDrawerBottom")) $("closeDrawerBottom").addEventListener("click", shutDrawer);
+  backdrop.addEventListener("click", shutDrawer);
 
   function refreshStepper(el) {
     const key = el.dataset.key, min = +el.dataset.min, max = +el.dataset.max, suffix = el.dataset.suffix;
