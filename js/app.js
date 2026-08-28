@@ -1405,7 +1405,6 @@
     const wasFocus = state.mode === "focus";
     const entry = logSession(state.mode, durationFor(state.mode), true);
     playSound();
-    playChimeSynth();
     flashTitleComplete();
     vibrate("done");
     bump($("ringStage"), "ring-complete");
