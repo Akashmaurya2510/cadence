@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0 — September 2026
+
+A real desktop layout.
+
+- **Improved**: On wide screens (≥1024px), the timer and task list now sit side by side instead of stacking in one narrow centered column — the timer ring is bigger too.
+
 ## 1.1.6 — August 2026
 
 Fewer accidental taps.

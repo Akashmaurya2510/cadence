@@ -8,9 +8,18 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.1.6";
+  const APP_VERSION = "1.2.0";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.2.0",
+      date: "September 2026",
+      title: "Cadence 1.2.0",
+      blurb: "A real desktop layout.",
+      items: [
+        { tag: "Improved", text: "On wide screens, the timer and task list now sit side by side instead of stacking in one narrow centered column — the timer ring is bigger too." },
+      ],
+    },
     {
       version: "1.1.6",
       date: "August 2026",

@@ -957,6 +957,47 @@ body.zen .site-footer { display: none !important; }
   .page.wide.active { display: grid; grid-template-columns: 1fr; }
 }
 
+/* Desktop timer layout: timer + controls beside the task list instead of
+   stacking everything in one narrow centered column. Mobile/tablet layout
+   (≤1023px) is untouched. */
+@media (min-width: 1024px) {
+  .page[data-page="timer"].active {
+    display: grid;
+    grid-template-columns: minmax(340px, 460px) minmax(360px, 520px);
+    grid-template-areas:
+      "mode    tasks"
+      "ring    tasks"
+      "hint    tasks"
+      "break   tasks"
+      "pips    tasks"
+      "controls tasks"
+      "footer  tasks";
+    column-gap: var(--space-7);
+    row-gap: 0;
+    align-items: start;
+    justify-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .page[data-page="timer"] .mode-row { grid-area: mode; width: 100%; }
+  .page[data-page="timer"] .ring-stage { grid-area: ring; width: clamp(320px, 24vw, 380px); height: clamp(320px, 24vw, 380px); }
+  .page[data-page="timer"] .zen-hint { grid-area: hint; }
+  .page[data-page="timer"] .break-suggest { grid-area: break; }
+  .page[data-page="timer"] .pips { grid-area: pips; }
+  .page[data-page="timer"] .controls { grid-area: controls; }
+  .page[data-page="timer"] footer.hint { grid-area: footer; margin-top: var(--space-5); padding-top: 0; }
+  .page[data-page="timer"] .tasks {
+    grid-area: tasks;
+    width: 100%;
+    max-width: none;
+    margin-top: var(--space-6);
+    align-self: stretch;
+    justify-self: stretch;
+  }
+}
+
 @media (hover: hover) and (pointer: fine) {
   .wordmark:hover { opacity: 0.8; }
   .desk-nav a:hover { color: var(--text); background: var(--surface-2); }
