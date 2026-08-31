@@ -1648,7 +1648,7 @@
     if (state.mode === "focus" && !state.activeTaskId && elapsedNow() === 0) {
       const ok = await askConfirm({
         title: "Start focus without a task?",
-        text: "No task is selected, so this time won't count toward anything. Start anyway?",
+        text: "No task is selected — this session will count toward your goal and streak, but not toward any task's progress. Start anyway?",
         ok: "Start anyway",
       });
       if (!ok) return;
