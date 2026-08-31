@@ -8,7 +8,6 @@
 .shortcut-list span { font-family: var(--font-mono); background: var(--surface-3); padding: 2px 6px; border-radius: var(--radius-sm); color: var(--text); }
 .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text); }
 
-
 :root {
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-display: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -162,17 +161,17 @@ header.top {
 }
 .desk-nav a.active { color: var(--accent-ink); background: var(--accent); }
 .icon-row { display: flex; gap: 6px; }
-.icon-btn, .btn, .drawer-close, .chip, .ghost-btn, .full-btn, .mode-switch button, .task button, .swatch, .tabbar a, .desk-nav a, [data-filter], [data-nav], .text-btn {
+.icon-btn, .btn, .drawer-close, .chip, .ghost-btn, .mode-switch button, .task button, .tabbar a, .desk-nav a, [data-filter], [data-nav], .text-btn {
   cursor: pointer;
 }
-.icon-btn, .btn-primary, .btn-secondary, .drawer-close, .full-btn, .ghost-btn, .chip, .mode-switch button, .swatch, .task .meta-chip, .task .due-chip {
+.icon-btn, .btn-primary, .btn-secondary, .drawer-close, .ghost-btn, .chip, .mode-switch button, .task .due-chip {
   font-family: inherit;
   transition: transform 0.15s var(--ease), background-color 0.25s var(--ease),
     color 0.25s var(--ease), border-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
 }
 .icon-btn:active, .btn-primary:active, .btn-secondary:active, .drawer-close:active,
-.full-btn:active, .ghost-btn:active, .chip:active, .mode-switch button:active,
-.swatch:active, .task-form button:active, .task .meta-chip:active, .task .due-chip:active {
+.ghost-btn:active, .chip:active, .mode-switch button:active,
+.task-form button:active, .task .due-chip:active {
   transform: scale(0.94);
 }
 .icon-btn {
@@ -529,19 +528,6 @@ textarea {
   box-shadow: inset 3px 0 0 var(--accent);
 }
 .task .meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 2px; }
-.task .meta-chip {
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text-dim);
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-family: var(--font-mono);
-  line-height: 1.6;
-  cursor: pointer;
-}
-.task .meta-chip.progress { color: var(--text); }
-.task .meta-chip.len { color: var(--text-dim); }
 .task .meta-text {
   border: 0; background: none; padding: 0; border-radius: 0;
   font-size: 12px; font-family: var(--font-mono); line-height: 1.6; cursor: pointer;
@@ -551,7 +537,7 @@ textarea {
 .task .meta-dot { color: var(--text-dim); font-size: 12px; }
 .task .recur-badge { color: var(--text-dim); font-size: 12px; }
 @media (hover: hover) and (pointer: fine) {
-  .task .meta-chip:hover, .task .due-chip:hover { border-color: var(--text-dim); color: var(--text); }
+  .task .due-chip:hover { border-color: var(--text-dim); color: var(--text); }
   .task .meta-text:hover { color: var(--text); }
 }
 .task .start-focus {
@@ -633,46 +619,6 @@ textarea {
 .task-tools .chip.on { background: var(--text); color: var(--bg); border-color: transparent; }
 body[data-mode="focus"] .page[data-page="timer"] .chip.on { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
 
-.popover {
-  position: absolute; top: 54px; right: 0;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-md); padding: 10px; display: flex; gap: 8px;
-  flex-wrap: wrap; align-items: center; justify-content: center;
-  max-width: min(320px, calc(100vw - 24px));
-  box-shadow: var(--shadow-lg);
-  opacity: 0; pointer-events: none; transform: translateY(-6px) scale(0.98);
-  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease); z-index: 20;
-}
-.popover.open { opacity: 1; pointer-events: auto; transform: none; }
-.swatch {
-  width: 36px; height: 36px; border-radius: 50%; border: 2px solid transparent;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
-}
-.swatch::after {
-  content: "";
-  position: absolute; inset: auto 4px 4px auto;
-  width: 12px; height: 12px; border-radius: 50%;
-  box-shadow: 0 0 0 2px rgba(0,0,0,0.25);
-}
-.swatch[data-t="graphite"] { background: #1d2025; }
-.swatch[data-t="graphite"]::after { background: #e7b54a; }
-.swatch[data-t="linen"] { background: #f3f4f6; box-shadow: inset 0 0 0 1px #dadde1; }
-.swatch[data-t="linen"]::after { background: #b4552e; }
-.swatch[data-t="glacier"] { background: #141d2b; }
-.swatch[data-t="glacier"]::after { background: #5ec8e8; }
-.swatch[data-t="espresso"] { background: #251c18; }
-.swatch[data-t="espresso"]::after { background: #d97b4f; }
-.swatch[data-t="aurora"] { background: #101720; }
-.swatch[data-t="aurora"]::after { background: #4ee6a8; }
-.swatch[data-t="oled"] { background: #0a0a0a; }
-.swatch[data-t="oled"]::after { background: #ff5470; }
-.swatch.active {
-  border-color: var(--text);
-  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text);
-}
 .header-anchor { position: relative; }
 
 .backdrop {
@@ -745,7 +691,7 @@ input[type="range"] { width: 100%; max-width: 100%; accent-color: var(--accent);
   transition: transform 0.25s var(--ease);
 }
 .switch.on::after { transform: translateX(17px); }
-.drawer-close, .full-btn {
+.drawer-close {
   margin-top: var(--space-2); width: 100%; padding: var(--space-3); border-radius: 999px;
   background: var(--accent); color: var(--accent-ink);
   font-family: var(--font-display); font-weight: 600; font-size: 14px; border: none;
@@ -762,7 +708,6 @@ input[type="range"] { width: 100%; max-width: 100%; accent-color: var(--accent);
   .ghost-btn:hover { border-color: var(--text-dim); }
 }
 .ghost-btn.danger { color: #c45c5c; }
-.ghost-btn.stacked { padding-top: 10px; padding-bottom: 10px; min-height: 52px; }
 .backup-card {
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -783,15 +728,6 @@ input[type="range"] { width: 100%; max-width: 100%; accent-color: var(--accent);
   margin-bottom: 4px;
   opacity: 0.75;
 }
-.btn-hint {
-  display: block;
-  font-family: var(--font-sans);
-  font-weight: 400;
-  font-size: 11.5px;
-  color: var(--text-dim);
-  margin-top: 3px;
-}
-
 /* ===== Settings groups (cards) ===== */
 .set-group {
   background: var(--surface-2);
@@ -1033,7 +969,6 @@ body.zen .site-footer { display: none !important; }
   .task .iconish:hover { color: var(--text); background: var(--surface-3); }
   .log-row:hover { background: var(--surface-2); }
   .chip:hover { border-color: var(--text-dim); }
-  .swatch:hover { transform: translateY(-2px); }
   .ghost-btn:hover { border-color: var(--text-dim); }
 }
 
@@ -1042,31 +977,6 @@ body.zen .site-footer { display: none !important; }
 ::-webkit-scrollbar-thumb { background: var(--track); border-radius: 999px; border: 2px solid var(--bg); }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
-.theme-auto-chip {
-  flex-shrink: 0;
-  height: 36px;
-  min-width: 48px;
-  margin: 0;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text-dim);
-  border-radius: 999px;
-  padding: 0 12px;
-  font-size: 12px;
-  font-family: var(--font-display);
-  font-weight: 600;
-  cursor: pointer;
-  letter-spacing: 0.02em;
-}
-.theme-auto-chip.on {
-  border-color: var(--text);
-  color: var(--text);
-  background: var(--surface-3);
-  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text);
-}
-.popover {
-  align-items: center;
-}
 #themeBtn {
   color: var(--accent, var(--work));
   border-color: color-mix(in oklab, var(--accent, var(--work)) 35%, var(--border));
@@ -1233,10 +1143,6 @@ body.compact .task { padding: 10px; margin-bottom: 6px; }
 body.compact .mode-row { margin-top: var(--space-4); }
 body.compact .controls { margin-top: var(--space-4); }
 body.compact .page-head { margin-bottom: var(--space-4); }
-
-/* Hide legacy popover rules if any conflict */
-.popover.theme-legacy { display: none; }
-
 
 /* ===== Settings full-screen sheet (2.4) ===== */
 .settings-sheet {
@@ -1458,7 +1364,6 @@ body.compact .page-head { margin-bottom: var(--space-4); }
   .settings-foot .drawer-close { max-width: 220px; margin-left: auto; margin-right: 0; }
 }
 
-
 /* ===== Micro-interactions ===== */
 @keyframes bump {
   0% { transform: scale(1); }
@@ -1575,9 +1480,6 @@ body.compact .page-head { margin-bottom: var(--space-4); }
   }
 }
 
-
-
-
 /* Mute control on ring (bottom-right) */
 .ring-mute {
   position: absolute;
@@ -1635,7 +1537,6 @@ body.zen.zen-controls .controls {
   display: flex;
   margin-top: var(--space-5);
 }
-
 
 /* What's new: button always visible */
 .changelog-box {
