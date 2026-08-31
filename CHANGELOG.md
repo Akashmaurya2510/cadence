@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.6 — August 2026
+
+Fewer accidental taps.
+
+- **New**: Starting a focus session with no task selected now asks first, so you don't lose time to an untracked block by accident.
+- **New**: "Clear completed" now asks before clearing your done tasks.
+
 ## 1.1.5 — August 2026
 
 Duplicate task.

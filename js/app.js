@@ -8,9 +8,19 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.1.5";
+  const APP_VERSION = "1.1.6";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.1.6",
+      date: "August 2026",
+      title: "Cadence 1.1.6",
+      blurb: "Fewer accidental taps.",
+      items: [
+        { tag: "New", text: "Starting a focus session with no task selected now asks first, so you don't lose time to an untracked block by accident." },
+        { tag: "New", text: "\"Clear completed\" now asks before clearing your done tasks." },
+      ],
+    },
     {
       version: "1.1.5",
       date: "August 2026",
@@ -1633,16 +1643,22 @@
       toast(settings.muted ? "Tick muted" : "Tick on");
     };
   }
-  $("playBtn").onclick = () => {
-    if (state.running) stopTimer();
-    else {
-      // User gesture — required for fullscreen on Android Chrome, and the most
-      // reliable moment to warm up the AudioContext so it isn't first touched
-      // minutes later from a background timer callback with no active gesture.
-      try { ctx(); } catch (e) { /* ignore */ }
-      enterImmersive();
-      startTimer();
+  $("playBtn").onclick = async () => {
+    if (state.running) { stopTimer(); return; }
+    if (state.mode === "focus" && !state.activeTaskId && elapsedNow() === 0) {
+      const ok = await askConfirm({
+        title: "Start focus without a task?",
+        text: "No task is selected, so this time won't count toward anything. Start anyway?",
+        ok: "Start anyway",
+      });
+      if (!ok) return;
     }
+    // User gesture — required for fullscreen on Android Chrome, and the most
+    // reliable moment to warm up the AudioContext so it isn't first touched
+    // minutes later from a background timer callback with no active gesture.
+    try { ctx(); } catch (e) { /* ignore */ }
+    enterImmersive();
+    startTimer();
   };
   $("resetBtn").onclick = () => {
     stopTimer();
@@ -1710,13 +1726,20 @@
     save(); renderTasks();
   };
   if ($("clearDoneTasksBtn")) {
-    $("clearDoneTasksBtn").onclick = () => {
+    $("clearDoneTasksBtn").onclick = async () => {
       const done = state.tasks.filter((t) => t.done);
       if (!done.length) { toast("No completed tasks to clear"); return; }
       // Recurring tasks aren't deleted — clearing just resets them for their next occurrence.
       const toRemove = done.filter((t) => !t.recurring);
       const toReset = done.filter((t) => t.recurring);
       if (!toRemove.length && !toReset.length) { toast("No completed tasks to clear"); return; }
+      const count = toRemove.length + toReset.length;
+      const ok = await askConfirm({
+        title: "Clear completed tasks?",
+        text: "This clears " + count + " completed task" + (count === 1 ? "" : "s") + ". You can undo right after.",
+        ok: "Clear",
+      });
+      if (!ok) return;
       const removedCopy = toRemove.map((t) => ({ ...t }));
       const resetCopy = toReset.map((t) => ({ ...t }));
       const removedIds = new Set(removedCopy.map((t) => t.id));
@@ -1724,7 +1747,6 @@
       toReset.forEach((t) => { t.done = false; t.doneOnDay = null; t.pomodoros = 0; });
       if (state.activeTaskId && removedIds.has(state.activeTaskId)) state.activeTaskId = null;
       save(); renderTasks();
-      const count = removedCopy.length + resetCopy.length;
       toast(count + " task" + (count === 1 ? "" : "s") + " cleared", "Undo", () => {
         state.tasks = removedCopy.concat(state.tasks);
         resetCopy.forEach((orig) => {
