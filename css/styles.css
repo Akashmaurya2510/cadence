@@ -87,7 +87,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scrollbar-color: var(--track) transparent; }
+html { scrollbar-color: var(--track) transparent; background: var(--bg); transition: background-color 0.45s var(--ease); }
 html, body {
   height: 100%;
   min-height: 100vh;
@@ -165,15 +165,15 @@ header.top {
 .icon-btn, .btn, .drawer-close, .chip, .ghost-btn, .full-btn, .mode-switch button, .task button, .swatch, .tabbar a, .desk-nav a, [data-filter], [data-nav], .text-btn {
   cursor: pointer;
 }
-.icon-btn, .btn-primary, .btn-secondary, .drawer-close, .full-btn, .ghost-btn, .chip, .mode-switch button, .swatch {
+.icon-btn, .btn-primary, .btn-secondary, .drawer-close, .full-btn, .ghost-btn, .chip, .mode-switch button, .swatch, .task .meta-chip, .task .due-chip {
   font-family: inherit;
   transition: transform 0.15s var(--ease), background-color 0.25s var(--ease),
     color 0.25s var(--ease), border-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
 }
 .icon-btn:active, .btn-primary:active, .btn-secondary:active, .drawer-close:active,
 .full-btn:active, .ghost-btn:active, .chip:active, .mode-switch button:active,
-.swatch:active, .task-form button:active {
-  transform: scale(0.96);
+.swatch:active, .task-form button:active, .task .meta-chip:active, .task .due-chip:active {
+  transform: scale(0.94);
 }
 .icon-btn {
   width: 44px; height: 44px; border-radius: 50%;
@@ -530,33 +530,33 @@ textarea {
 }
 .task .meta-chip.progress { color: var(--text); }
 .task .meta-chip.len { color: var(--text-dim); }
+@media (hover: hover) and (pointer: fine) {
+  .task .meta-chip:hover, .task .due-chip:hover { border-color: var(--text-dim); color: var(--text); }
+}
 .task .start-focus {
   display: none;
-  margin-top: 6px;
-  font-size: 12px;
+  margin-top: 8px;
+  width: 100%;
+  height: 36px;
+  font-size: 13px;
   font-weight: 600;
   font-family: var(--font-display);
   color: var(--accent-ink);
   background: var(--accent);
   border: 0;
-  border-radius: 999px;
-  padding: 6px 12px;
+  border-radius: var(--radius-md);
   cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px var(--accent-soft);
+  transition: transform 0.15s var(--ease), box-shadow 0.2s var(--ease), background-color 0.25s var(--ease);
 }
-.task.active .start-focus { display: inline-flex; align-items: center; gap: 4px; }
+.task.active .start-focus { display: flex; }
 .task.done { opacity: 0.72; }
 .task.done .start-focus { display: none; }
-.unselect-chip {
-  display: inline-flex; align-items: center; gap: 4px;
-  margin-top: 6px; margin-left: 8px;
-  font-size: 12px; font-weight: 500;
-  color: var(--text-dim); background: transparent;
-  border: 1px solid var(--border); border-radius: 999px;
-  padding: 6px 12px; cursor: pointer;
-  transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
-}
+.task .start-focus:active { transform: scale(0.97); box-shadow: 0 3px 10px var(--accent-soft); }
 @media (hover: hover) and (pointer: fine) {
-  .unselect-chip:hover { color: var(--text); border-color: var(--text-dim); }
+  .task .start-focus:hover { transform: translateY(-1px); }
 }
 
 @media (max-width: 480px) {

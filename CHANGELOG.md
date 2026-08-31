@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.3 — August 2026
+
+Two small polish fixes.
+
+- **Fix**: Tapping an already-selected task now deselects it in place — removed the separate "Unselect" chip and cleaned up the task action buttons.
+- **Fix**: Switching themes no longer leaves a stale dark strip on screen until you refresh the page.
+
 ## 1.1.0 — August 2026
 
 Advanced focus features and performance polish.

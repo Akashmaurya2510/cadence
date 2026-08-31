@@ -8,9 +8,19 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.0.2";
+  const APP_VERSION = "1.0.3";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.0.3",
+      date: "August 2026",
+      title: "Cadence 1.0.3",
+      blurb: "Two small polish fixes.",
+      items: [
+        { tag: "Fix", text: "Tapping a selected task now deselects it — the separate Unselect chip is gone." },
+        { tag: "Fix", text: "Switching themes no longer leaves a stale dark strip on screen until you refresh." },
+      ],
+    },
     {
       version: "1.0.2",
       date: "August 2026",
@@ -607,6 +617,9 @@
     const color = THEME_COLORS[theme] || "#15171b";
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content", color);
+    // Keep the <html> inline background (set at boot to avoid a flash-of-wrong-theme)
+    // in sync, otherwise it stays stuck on the old color until the page reloads.
+    document.documentElement.style.background = color;
     applyAccent();
     syncThemeUI();
   }
@@ -619,11 +632,13 @@
       const color = THEME_COLORS[auto] || "#15171b";
       const meta = document.querySelector('meta[name="theme-color"]');
       if (meta) meta.setAttribute("content", color);
+      document.documentElement.style.background = color;
     } else {
       document.documentElement.setAttribute("data-theme", state.theme);
       const color = THEME_COLORS[state.theme] || "#15171b";
       const meta = document.querySelector('meta[name="theme-color"]');
       if (meta) meta.setAttribute("content", color);
+      document.documentElement.style.background = color;
     }
     applyAccent();
     syncThemeUI();
@@ -690,7 +705,6 @@
             '<button class="due-chip' + (t.due === "today" ? " today" : "") + '" type="button">' + dueLabel + "</button>" +
           "</div>" +
           (t.archived || t.done ? "" : '<button type="button" class="start-focus">Start focus</button>') +
-          (t.id === state.activeTaskId ? '<button type="button" class="meta-chip unselect-chip">✕ Unselect</button>' : "") +
         "</div>" +
         '<div class="actions">' +
           '<button class="iconish up" aria-label="Move up" title="Move up">↑</button>' +
@@ -741,12 +755,13 @@
         vibrate(t.done ? "medium" : "light");
         if (t.done) bump(row, "task-pop");
       };
-      row.querySelector(".title").onclick = () => selectTask(false);
+      row.querySelector(".title").onclick = () => {
+        if (t.id === state.activeTaskId) unselectTask();
+        else selectTask(false);
+      };
       row.querySelector(".title").ondblclick = (e) => { e.preventDefault(); startEdit(row, t); };
       const startBtn = row.querySelector(".start-focus");
       if (startBtn) startBtn.onclick = (e) => { e.stopPropagation(); selectTask(true); };
-      const unselectBtn = row.querySelector(".unselect-chip");
-      if (unselectBtn) unselectBtn.onclick = (e) => { e.stopPropagation(); unselectTask(); };
       row.querySelector(".due-chip").onclick = (e) => {
         e.stopPropagation();
         t.due = t.due === "today" ? "later" : t.due === "later" ? null : "today";
