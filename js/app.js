@@ -276,7 +276,24 @@
       due: t.due === "today" || t.due === "later" ? t.due : null,
       archived: !!t.archived,
       remainingSec: rem > 0 && rem <= 90 * 60 ? Math.floor(rem) : 0,
+      recurring: !!t.recurring,
+      doneOnDay: t.doneOnDay || null,
     };
+  }
+  /** Recurring tasks marked done on a previous day pop back to not-done. Returns true if anything changed. */
+  function resetRecurringTasks() {
+    const today = dayKey(Date.now());
+    let changed = false;
+    state.tasks.forEach((t) => {
+      if (t.recurring && t.done && t.doneOnDay && t.doneOnDay !== today) {
+        t.done = false;
+        t.pomodoros = 0;
+        t.doneOnDay = null;
+        if (t.id === state.activeTaskId) t.remainingSec = 0;
+        changed = true;
+      }
+    });
+    return changed;
   }
   function isValidSession(s) {
     return s && typeof s === "object"
@@ -717,7 +734,7 @@
       row.innerHTML =
         '<button class="chk" aria-label="Mark done"></button>' +
         '<div class="body">' +
-          '<button class="title">' + escapeHtml(t.title) + "</button>" +
+          '<button class="title">' + (t.recurring ? '<span class="recur-badge" title="Repeats daily">&#8635;</span> ' : "") + escapeHtml(t.title) + "</button>" +
           '<div class="meta">' +
             (t.target > 0 ? '<div class="pomo-bar" title="' + progressLabel + '"><span style="width:' + pct + '%"></span></div>' : "") +
             '<button type="button" class="meta-text progress pomo-hit">' + progressLabel + "</button>" +
@@ -735,6 +752,7 @@
               '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>' +
             "</button>" +
             '<div class="task-menu" hidden>' +
+              '<button type="button" class="menu-item recur">' + (t.recurring ? "Stop repeating" : "Repeat daily") + "</button>" +
               '<button type="button" class="menu-item archive">' + (t.archived ? "Resume" : "Pause") + "</button>" +
               '<button type="button" class="menu-item del">Delete</button>' +
             "</div>" +
@@ -774,6 +792,7 @@
       row.querySelector(".chk").onclick = (e) => {
         e.stopPropagation();
         t.done = !t.done;
+        t.doneOnDay = t.done ? dayKey(Date.now()) : null;
         if (t.done && state.activeTaskId === t.id) state.activeTaskId = null;
         save(); renderTasks();
         vibrate(t.done ? "medium" : "light");
@@ -829,6 +848,14 @@
           taskMenu.hidden = false;
           kebabBtn.setAttribute("aria-expanded", "true");
         }
+      };
+      row.querySelector(".menu-item.recur").onclick = (e) => {
+        e.stopPropagation();
+        closeAllTaskMenus();
+        t.recurring = !t.recurring;
+        if (t.recurring && t.done) t.doneOnDay = dayKey(Date.now());
+        save(); renderTasks();
+        toast(t.recurring ? "Will repeat daily" : "No longer repeating");
       };
       row.querySelector(".menu-item.archive").onclick = (e) => {
         e.stopPropagation();
@@ -1654,15 +1681,26 @@
   };
   if ($("clearDoneTasksBtn")) {
     $("clearDoneTasksBtn").onclick = () => {
-      const removed = state.tasks.filter((t) => t.done);
-      if (!removed.length) { toast("No completed tasks to clear"); return; }
-      const removedCopy = removed.map((t) => ({ ...t }));
+      const done = state.tasks.filter((t) => t.done);
+      if (!done.length) { toast("No completed tasks to clear"); return; }
+      // Recurring tasks aren't deleted — clearing just resets them for their next occurrence.
+      const toRemove = done.filter((t) => !t.recurring);
+      const toReset = done.filter((t) => t.recurring);
+      if (!toRemove.length && !toReset.length) { toast("No completed tasks to clear"); return; }
+      const removedCopy = toRemove.map((t) => ({ ...t }));
+      const resetCopy = toReset.map((t) => ({ ...t }));
       const removedIds = new Set(removedCopy.map((t) => t.id));
-      state.tasks = state.tasks.filter((t) => !t.done);
+      state.tasks = state.tasks.filter((t) => !removedIds.has(t.id));
+      toReset.forEach((t) => { t.done = false; t.doneOnDay = null; t.pomodoros = 0; });
       if (state.activeTaskId && removedIds.has(state.activeTaskId)) state.activeTaskId = null;
       save(); renderTasks();
-      toast(removedCopy.length + " task" + (removedCopy.length === 1 ? "" : "s") + " cleared", "Undo", () => {
+      const count = removedCopy.length + resetCopy.length;
+      toast(count + " task" + (count === 1 ? "" : "s") + " cleared", "Undo", () => {
         state.tasks = removedCopy.concat(state.tasks);
+        resetCopy.forEach((orig) => {
+          const cur = state.tasks.find((t) => t.id === orig.id);
+          if (cur) { cur.done = true; cur.doneOnDay = orig.doneOnDay; cur.pomodoros = orig.pomodoros; }
+        });
         save(); renderTasks();
       });
     };
@@ -2003,6 +2041,7 @@
       stopTitleFlash();
       tick();
       if (state.running) renderTimer();
+      if (resetRecurringTasks()) { save(); renderTasks(); }
     }
   });
   window.addEventListener("pageshow", () => { stopTitleFlash(); if (state.running) tick(); });
@@ -2435,6 +2474,7 @@
   });
 
   const hadData = load();
+  if (resetRecurringTasks()) save();
   checkBadgeUnlocks(true);
   const hash = (location.hash || "").replace("#", "");
   try { renderAll(); } catch (e) { console.error(e); toast("Something went wrong rendering. Try Settings → Clear, or import a backup."); }

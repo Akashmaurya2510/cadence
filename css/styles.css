@@ -549,6 +549,7 @@ textarea {
 }
 .task .meta-text.progress { color: var(--text); }
 .task .meta-dot { color: var(--text-dim); font-size: 12px; }
+.task .recur-badge { color: var(--text-dim); font-size: 12px; }
 @media (hover: hover) and (pointer: fine) {
   .task .meta-chip:hover, .task .due-chip:hover { border-color: var(--text-dim); color: var(--text); }
   .task .meta-text:hover { color: var(--text); }

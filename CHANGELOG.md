@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.5 — August 2026
+
+Recurring daily tasks.
+
+- **New**: Tasks can be marked "Repeat daily" from the "⋯" menu — a small ↻ badge shows on the title. Marking one done resets it automatically the next day instead of piling up as permanently completed.
+- **Fix**: "Clear completed" no longer deletes recurring tasks — it resets them (unchecks + zeroes progress) for their next occurrence instead of removing them.
+
 ## 1.0.4 — August 2026
 
 Cleaner task cards.
