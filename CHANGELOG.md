@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.4 — August 2026
+
+Cleaner task cards.
+
+- **Improved**: Progress and focus length are now plain text instead of bordered chips, and pause/delete are tucked into a single "⋯" menu.
+- **Improved**: The Today/Later chip is hidden on the Today and Later tabs since it's redundant there.
+
 ## 1.0.3 — August 2026
 
 Two small polish fixes.

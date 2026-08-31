@@ -8,9 +8,19 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.0.3";
+  const APP_VERSION = "1.0.4";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.0.4",
+      date: "August 2026",
+      title: "Cadence 1.0.4",
+      blurb: "Cleaner task cards.",
+      items: [
+        { tag: "Improved", text: "Task cards are less cluttered — progress and focus length now sit as plain text, and the pause/delete icons are tucked into a single menu." },
+        { tag: "Improved", text: "The Today/Later chip is hidden on the Today and Later tabs, since it's redundant there." },
+      ],
+    },
     {
       version: "1.0.3",
       date: "August 2026",
@@ -668,6 +678,15 @@
     return list;
   }
 
+  function closeAllTaskMenus() {
+    document.querySelectorAll(".task-menu").forEach((m) => { m.hidden = true; });
+    document.querySelectorAll(".kebab").forEach((b) => b.setAttribute("aria-expanded", "false"));
+  }
+  document.addEventListener("click", (e) => {
+    if (e.target.closest && e.target.closest(".kebab-wrap")) return;
+    closeAllTaskMenus();
+  });
+
   function renderTasks() {
     const list = $("taskList");
     list.innerHTML = "";
@@ -694,27 +713,32 @@
         ? (t.pomodoros + "/" + t.target)
         : (t.pomodoros ? t.pomodoros + " done" : "Set target");
       const lenLabel = (t.focusMin || settings.focus) + "m";
+      const showDueChip = state.taskView !== "today" && state.taskView !== "later";
       row.innerHTML =
         '<button class="chk" aria-label="Mark done"></button>' +
         '<div class="body">' +
           '<button class="title">' + escapeHtml(t.title) + "</button>" +
           '<div class="meta">' +
             (t.target > 0 ? '<div class="pomo-bar" title="' + progressLabel + '"><span style="width:' + pct + '%"></span></div>' : "") +
-            '<button type="button" class="meta-chip progress pomo-hit">' + progressLabel + "</button>" +
-            '<button type="button" class="meta-chip len focus-len" title="Focus length">' + lenLabel + "</button>" +
-            '<button class="due-chip' + (t.due === "today" ? " today" : "") + '" type="button">' + dueLabel + "</button>" +
+            '<button type="button" class="meta-text progress pomo-hit">' + progressLabel + "</button>" +
+            '<span class="meta-dot">&middot;</span>' +
+            '<button type="button" class="meta-text len focus-len" title="Focus length">' + lenLabel + "</button>" +
+            (showDueChip ? '<button class="due-chip' + (t.due === "today" ? " today" : "") + '" type="button">' + dueLabel + "</button>" : "") +
           "</div>" +
           (t.archived || t.done ? "" : '<button type="button" class="start-focus">Start focus</button>') +
         "</div>" +
         '<div class="actions">' +
           '<button class="iconish up" aria-label="Move up" title="Move up">↑</button>' +
           '<button class="iconish down" aria-label="Move down" title="Move down">↓</button>' +
-          '<button class="iconish archive" aria-label="' + (t.archived ? "Resume" : "Pause") + '" title="' + (t.archived ? "Resume" : "Pause") + '">' +
-            (t.archived
-              ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'
-              : '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>') +
-          "</button>" +
-          '<button class="iconish del" aria-label="Delete">×</button>' +
+          '<div class="kebab-wrap">' +
+            '<button class="iconish kebab" aria-label="More actions" aria-haspopup="true" aria-expanded="false">' +
+              '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>' +
+            "</button>" +
+            '<div class="task-menu" hidden>' +
+              '<button type="button" class="menu-item archive">' + (t.archived ? "Resume" : "Pause") + "</button>" +
+              '<button type="button" class="menu-item del">Delete</button>' +
+            "</div>" +
+          "</div>" +
         "</div>";
       function selectTask(start) {
         if (t.archived || t.done) return;
@@ -762,11 +786,14 @@
       row.querySelector(".title").ondblclick = (e) => { e.preventDefault(); startEdit(row, t); };
       const startBtn = row.querySelector(".start-focus");
       if (startBtn) startBtn.onclick = (e) => { e.stopPropagation(); selectTask(true); };
-      row.querySelector(".due-chip").onclick = (e) => {
-        e.stopPropagation();
-        t.due = t.due === "today" ? "later" : t.due === "later" ? null : "today";
-        save(); renderTasks();
-      };
+      const dueChip = row.querySelector(".due-chip");
+      if (dueChip) {
+        dueChip.onclick = (e) => {
+          e.stopPropagation();
+          t.due = t.due === "today" ? "later" : t.due === "later" ? null : "today";
+          save(); renderTasks();
+        };
+      }
       const pomoHit = row.querySelector(".pomo-hit");
       if (pomoHit) {
         pomoHit.onclick = (e) => {
@@ -792,14 +819,30 @@
       }
       row.querySelector(".up").onclick = (e) => { e.stopPropagation(); moveTask(t.id, -1); };
       row.querySelector(".down").onclick = (e) => { e.stopPropagation(); moveTask(t.id, 1); };
-      row.querySelector(".archive").onclick = (e) => {
+      const kebabBtn = row.querySelector(".kebab");
+      const taskMenu = row.querySelector(".task-menu");
+      kebabBtn.onclick = (e) => {
         e.stopPropagation();
+        const willOpen = taskMenu.hidden;
+        closeAllTaskMenus();
+        if (willOpen) {
+          taskMenu.hidden = false;
+          kebabBtn.setAttribute("aria-expanded", "true");
+        }
+      };
+      row.querySelector(".menu-item.archive").onclick = (e) => {
+        e.stopPropagation();
+        closeAllTaskMenus();
         t.archived = !t.archived;
         if (t.archived && state.activeTaskId === t.id) state.activeTaskId = null;
         save(); renderTasks();
         toast(t.archived ? "Task paused" : "Task resumed");
       };
-      row.querySelector(".del").onclick = (e) => { e.stopPropagation(); deleteTask(t); };
+      row.querySelector(".menu-item.del").onclick = (e) => {
+        e.stopPropagation();
+        closeAllTaskMenus();
+        deleteTask(t);
+      };
       row.ondragstart = () => { state.dragId = t.id; row.classList.add("dragging"); };
       row.ondragend = () => { state.dragId = null; row.classList.remove("dragging"); };
       row.ondragover = (e) => e.preventDefault();
