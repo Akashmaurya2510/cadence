@@ -8,9 +8,18 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.0.4";
+  const APP_VERSION = "1.1.5";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.1.5",
+      date: "August 2026",
+      title: "Cadence 1.1.5",
+      blurb: "Duplicate a task in one tap.",
+      items: [
+        { tag: "New", text: "Task menu (⋯) now has a Duplicate action — makes a fresh copy with the same title, duration, and list, ready to start again." },
+      ],
+    },
     {
       version: "1.0.4",
       date: "August 2026",
@@ -754,6 +763,7 @@
             '<div class="task-menu" hidden>' +
               '<button type="button" class="menu-item recur">' + (t.recurring ? "Stop repeating" : "Repeat daily") + "</button>" +
               '<button type="button" class="menu-item archive">' + (t.archived ? "Resume" : "Pause") + "</button>" +
+              '<button type="button" class="menu-item dup">Duplicate</button>' +
               '<button type="button" class="menu-item del">Delete</button>' +
             "</div>" +
           "</div>" +
@@ -865,6 +875,11 @@
         save(); renderTasks();
         toast(t.archived ? "Task paused" : "Task resumed");
       };
+      row.querySelector(".menu-item.dup").onclick = (e) => {
+        e.stopPropagation();
+        closeAllTaskMenus();
+        duplicateTask(t);
+      };
       row.querySelector(".menu-item.del").onclick = (e) => {
         e.stopPropagation();
         closeAllTaskMenus();
@@ -929,6 +944,21 @@
       state.tasks.splice(Math.min(idx, state.tasks.length), 0, copy);
       save(); renderTasks();
     });
+  }
+  function duplicateTask(t) {
+    const copy = normalizeTask({
+      ...t,
+      id: uid(),
+      title: t.title + " (copy)",
+      done: false,
+      pomodoros: 0,
+      doneOnDay: null,
+      remainingSec: 0,
+    });
+    const idx = state.tasks.findIndex((x) => x.id === t.id);
+    state.tasks.splice(idx + 1, 0, copy);
+    save(); renderTasks();
+    toast("Task duplicated");
   }
 
   function renderTimer() {

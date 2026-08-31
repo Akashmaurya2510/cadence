@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.5 — August 2026
+
+Duplicate task.
+
+- **New**: Task menu (⋯) now has a "Duplicate" action — makes a fresh copy with the same title, duration, and list, ready to start again.
+
 ## 1.0.5 — August 2026
 
 Recurring daily tasks.
