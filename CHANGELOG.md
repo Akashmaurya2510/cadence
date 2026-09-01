@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.1 — September 2026
+
+Fix a typo after the fact.
+
+- **New**: Tap any entry in Session history to edit its note — add one you skipped, fix a typo, or clear it out. Works for focus and break entries alike.
+
 ## 1.3.0 — September 2026
 
 Ask, don't assume.

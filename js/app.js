@@ -8,9 +8,18 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.3.0";
+  const APP_VERSION = "1.3.1";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.3.1",
+      date: "September 2026",
+      title: "Cadence 1.3.1",
+      blurb: "Fix a typo after the fact.",
+      items: [
+        { tag: "New", text: "Tap any entry in Session history to edit its note — add one you skipped, fix a typo, or clear it out. Works for focus and break entries alike." },
+      ],
+    },
     {
       version: "1.3.0",
       date: "September 2026",
@@ -161,6 +170,7 @@
     schemaVersion: SCHEMA_VERSION,
     taskPromptAsked: false,
     breakTaskId: null,
+    editingLogNoteId: null,
   };
 
   const $ = (id) => document.getElementById(id);
@@ -1314,14 +1324,20 @@
         const task = state.tasks.find((t) => t.id === s.taskId);
         const row = document.createElement("div");
         row.className = "log-row";
+        row.tabIndex = 0;
+        row.setAttribute("role", "button");
+        row.setAttribute("aria-label", "Edit note");
         const t0 = new Date(s.startedAt), t1 = new Date(s.endedAt);
         row.innerHTML =
           '<span class="dot ' + (s.mode === "focus" ? "focus" : "break") + '"></span>' +
           '<div style="flex:1"><div>' + MODE_LABEL[s.mode] + (task ? " · " + escapeHtml(task.title) : "") + "</div>" +
           '<div class="today-line">' + pad(t0.getHours()) + ":" + pad(t0.getMinutes()) + " – " + pad(t1.getHours()) + ":" + pad(t1.getMinutes()) + "</div>" +
-          (s.note ? '<div class="log-note">' + escapeHtml(s.note) + "</div>" : "") +
+          (s.note ? '<div class="log-note">' + escapeHtml(s.note) + "</div>" : '<div class="log-note log-note-empty">Add a note</div>') +
           '</div><div style="text-align:right"><div>' + Math.round(s.durationSec / 60) + "m</div>" +
-          '<div class="today-line">' + (s.completed ? "Done" : "Skipped") + "</div></div>";
+          '<div class="today-line">' + (s.completed ? "Done" : "Skipped") + "</div></div>" +
+          '<span class="log-edit-hint" aria-hidden="true">✎</span>';
+        row.onclick = () => openLogNoteEditor(s.id);
+        row.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openLogNoteEditor(s.id); } };
         box.appendChild(row);
       });
       wrap.appendChild(sec);
@@ -2255,12 +2271,43 @@
     if (e.target.id === "taskPromptModal" && taskPromptResolver) taskPromptResolver(null);
   };
 
+  function setNoteModalCopy(editing) {
+    $("noteModalTitle").textContent = editing ? "Edit note" : "Session complete";
+    $("noteModalText").textContent = editing
+      ? "Update the note for this session, or clear it and save to remove it."
+      : "What did you work on? Skip anytime.";
+    $("noteSkip").textContent = editing ? "Cancel" : "Skip";
+    $("noteSave").textContent = editing ? "Save" : "Save note";
+  }
   function openNoteModal() {
+    setNoteModalCopy(false);
     $("noteInput").value = "";
     $("noteModal").classList.add("open");
     setTimeout(() => $("noteInput").focus(), 50);
   }
+  function openLogNoteEditor(sessionId) {
+    const s = state.sessions.find((x) => x.id === sessionId);
+    if (!s) return;
+    state.editingLogNoteId = sessionId;
+    setNoteModalCopy(true);
+    $("noteInput").value = s.note || "";
+    $("noteModal").classList.add("open");
+    setTimeout(() => { const el = $("noteInput"); el.focus(); el.setSelectionRange(el.value.length, el.value.length); }, 50);
+  }
   function closeNote(saveNote) {
+    if (state.editingLogNoteId) {
+      const s = state.sessions.find((x) => x.id === state.editingLogNoteId);
+      if (saveNote && s) {
+        const text = $("noteInput").value.trim();
+        if (text) s.note = text; else delete s.note;
+        save();
+        renderLog();
+      }
+      state.editingLogNoteId = null;
+      $("noteModal").classList.remove("open");
+      setNoteModalCopy(false);
+      return;
+    }
     if (saveNote && state.pendingNoteId) {
       const s = state.sessions.find((x) => x.id === state.pendingNoteId);
       const text = $("noteInput").value.trim();
