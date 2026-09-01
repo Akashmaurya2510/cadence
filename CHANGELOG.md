@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0 — September 2026
+
+Ask, don't assume.
+
+- **New**: Tapping Focus, Short Break, or Long Break now asks which task it's for — handy for tagging a break as lunch or an errand. Fully optional, one tap to skip.
+- **Improved**: That popup stays quiet once a task is already selected for Focus, or once you've already answered it for the current break.
+- **Fix**: If a session finished while the app was closed or backgrounded, the "what did you work on" note now shows when you come back instead of being silently skipped.
+
 ## 1.2.0 — September 2026
 
 A real desktop layout.

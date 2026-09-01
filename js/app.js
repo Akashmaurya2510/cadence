@@ -8,9 +8,20 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.2.0";
+  const APP_VERSION = "1.3.0";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.3.0",
+      date: "September 2026",
+      title: "Cadence 1.3.0",
+      blurb: "Ask, don't assume.",
+      items: [
+        { tag: "New", text: "Tapping Focus, Short Break, or Long Break now asks which task it's for — handy for tagging a break as lunch or an errand. Fully optional, one tap to skip." },
+        { tag: "Improved", text: "That popup stays quiet once a task is already selected for Focus, or once you've already answered it for the current break." },
+        { tag: "Fix", text: "If a session finished while the app was closed or backgrounded, the \"what did you work on\" note now shows when you come back instead of being silently skipped." },
+      ],
+    },
     {
       version: "1.2.0",
       date: "September 2026",
@@ -148,6 +159,8 @@
     auroraUnlocked: false,
     badgesUnlocked: [],
     schemaVersion: SCHEMA_VERSION,
+    taskPromptAsked: false,
+    breakTaskId: null,
   };
 
   const $ = (id) => document.getElementById(id);
@@ -1341,7 +1354,9 @@
     const startedAt = tsOverride ? tsOverride.startedAt : endedAt - elapsed * 1000;
     const entry = {
       id: uid(), mode, startedAt, endedAt: endedAt,
-      durationSec: elapsed, taskId: mode === "focus" ? state.activeTaskId : undefined, completed,
+      durationSec: elapsed,
+      taskId: mode === "focus" ? (state.activeTaskId || undefined) : (state.breakTaskId || undefined),
+      completed,
     };
     state.sessions.push(entry);
     if (completed && mode === "focus") { checkAuroraUnlock(); checkBadgeUnlocks(); }
@@ -1497,6 +1512,8 @@
     state.secondsLeft = durationFor(state.mode);
     state.running = false;
     state.endsAt = null;
+    state.taskPromptAsked = false;
+    state.breakTaskId = null;
     clearInterval(state.timerId);
     setZen(false);
     if (fromComplete && settings.autoStart && !state.pendingNoteId) startTimer();
@@ -1528,9 +1545,19 @@
     const wasFocus = state.mode === "focus";
     const durationSec = durationFor(state.mode);
     const startedAt = endsAt - durationSec * 1000;
-    logSession(state.mode, durationSec, true, { startedAt, endedAt: endsAt });
-    advance(false);
-    toast((wasFocus ? "Focus" : "Break") + " session logged — it finished while you were away");
+    const entry = logSession(state.mode, durationSec, true, { startedAt, endedAt: endsAt });
+    if (wasFocus && entry) {
+      // It finished while the app was closed/backgrounded — don't silently skip the
+      // note prompt, just surface it now that the person is back.
+      state.pendingNoteId = entry.id;
+      state.pendingAutoStart = false;
+      advance(false);
+      toast("Focus session logged — it finished while you were away");
+      openNoteModal();
+    } else {
+      advance(false);
+      toast("Break session logged — it finished while you were away");
+    }
   }
 
   function completePhase() {
@@ -1627,9 +1654,12 @@
     const go = () => {
       stopTimer();
       if (state.mode === "focus" && mode !== "focus") clearTaskRemaining();
+      const modeChanged = state.mode !== mode;
       state.mode = mode;
       state.secondsLeft = durationFor(mode);
+      if (modeChanged) { state.taskPromptAsked = false; state.breakTaskId = null; }
       renderTimer(); save();
+      maybePromptTask(mode);
     };
     if (meaningfullyElapsed()) {
       askConfirm({
@@ -1638,6 +1668,71 @@
         ok: "Switch",
       }).then((ok) => { if (ok) go(); });
     } else go();
+  }
+
+  /** Whether the "which task?" popup should appear before this mode starts.
+   *  Focus is skipped once a task is already selected — Cadence already knows.
+   *  Breaks ask once per break instance (cleared again on the next advance/switch). */
+  function taskPromptNeeded(mode) {
+    if (mode === "focus") return !state.activeTaskId;
+    return !state.taskPromptAsked;
+  }
+
+  let taskPromptResolver = null;
+  function openTaskPromptModal(mode) {
+    return new Promise((resolve) => {
+      const list = $("taskPromptList");
+      const isFocus = mode === "focus";
+      $("taskPromptTitle").textContent = isFocus ? "Which task?" : "Taking a break?";
+      $("taskPromptText").textContent = isFocus
+        ? "Pick a task for this focus block, or start without one."
+        : "Tag it to a task if it helps — like lunch or an errand — or just continue.";
+      const candidates = state.tasks.filter((t) => !t.done && !t.archived);
+      list.innerHTML = "";
+      if (!candidates.length) {
+        list.innerHTML = '<p class="task-pick-empty">No open tasks yet.</p>';
+      } else {
+        candidates.forEach((t) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "task-pick-item";
+          const progressLabel = t.target > 0 ? (t.pomodoros + "/" + t.target) : (t.pomodoros ? t.pomodoros + " done" : "");
+          btn.innerHTML = "<span>" + escapeHtml(t.title) + "</span>" +
+            (progressLabel ? '<span class="tpi-meta">' + progressLabel + "</span>" : "");
+          btn.onclick = () => settle({ taskId: t.id });
+          list.appendChild(btn);
+        });
+      }
+      function settle(result) {
+        $("taskPromptModal").classList.remove("open");
+        taskPromptResolver = null;
+        resolve(result);
+      }
+      taskPromptResolver = settle;
+      $("taskPromptModal").classList.add("open");
+    });
+  }
+  async function maybePromptTask(mode) {
+    if (!taskPromptNeeded(mode)) return;
+    if ($("taskPromptModal").classList.contains("open")) return;
+    const result = await openTaskPromptModal(mode);
+    state.taskPromptAsked = true;
+    if (result && result.taskId) {
+      if (mode === "focus") {
+        const t = state.tasks.find((x) => x.id === result.taskId);
+        if (t) {
+          if (state.activeTaskId && state.activeTaskId !== t.id) saveTaskRemaining();
+          state.activeTaskId = t.id;
+          if (!state.running) {
+            const full = taskFocusDuration(t);
+            state.secondsLeft = (t.remainingSec > 0 && t.remainingSec < full) ? t.remainingSec : full;
+          }
+        }
+      } else {
+        state.breakTaskId = result.taskId;
+      }
+      save(); renderTasks(); renderTimer();
+    }
   }
 
   if ($("muteBtn")) {
@@ -1654,13 +1749,8 @@
   }
   $("playBtn").onclick = async () => {
     if (state.running) { stopTimer(); return; }
-    if (state.mode === "focus" && !state.activeTaskId && elapsedNow() === 0) {
-      const ok = await askConfirm({
-        title: "Start focus without a task?",
-        text: "No task is selected — this session will count toward your goal and streak, but not toward any task's progress. Start anyway?",
-        ok: "Start anyway",
-      });
-      if (!ok) return;
+    if (elapsedNow() === 0) {
+      await maybePromptTask(state.mode);
     }
     // User gesture — required for fullscreen on Android Chrome, and the most
     // reliable moment to warm up the AudioContext so it isn't first touched
@@ -2073,6 +2163,10 @@
 
   function closeTopModal() {
     if (drawer.classList.contains("open")) { shutDrawer(); return true; }
+    if ($("taskPromptModal").classList.contains("open")) {
+      if (taskPromptResolver) taskPromptResolver(null);
+      return true;
+    }
     const open = document.querySelector(".modal.open");
     if (open && open.id !== "noteModal") { open.classList.remove("open"); return true; }
     return false;
@@ -2155,6 +2249,11 @@
   $("confirmOk").onclick = () => settleConfirm(true);
   $("confirmCancel").onclick = () => settleConfirm(false);
   $("confirmModal").onclick = (e) => { if (e.target.id === "confirmModal") settleConfirm(false); };
+
+  $("taskPromptSkip").onclick = () => { if (taskPromptResolver) taskPromptResolver(null); };
+  $("taskPromptModal").onclick = (e) => {
+    if (e.target.id === "taskPromptModal" && taskPromptResolver) taskPromptResolver(null);
+  };
 
   function openNoteModal() {
     $("noteInput").value = "";

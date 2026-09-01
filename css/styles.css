@@ -161,17 +161,17 @@ header.top {
 }
 .desk-nav a.active { color: var(--accent-ink); background: var(--accent); }
 .icon-row { display: flex; gap: 6px; }
-.icon-btn, .btn, .drawer-close, .chip, .ghost-btn, .mode-switch button, .task button, .tabbar a, .desk-nav a, [data-filter], [data-nav], .text-btn {
+.icon-btn, .btn, .drawer-close, .chip, .ghost-btn, .mode-switch button, .task button, .tabbar a, .desk-nav a, [data-filter], [data-nav], .text-btn, .task-pick-item {
   cursor: pointer;
 }
-.icon-btn, .btn-primary, .btn-secondary, .drawer-close, .ghost-btn, .chip, .mode-switch button, .task .due-chip {
+.icon-btn, .btn-primary, .btn-secondary, .drawer-close, .ghost-btn, .chip, .mode-switch button, .task .due-chip, .task-pick-item {
   font-family: inherit;
   transition: transform 0.15s var(--ease), background-color 0.25s var(--ease),
     color 0.25s var(--ease), border-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
 }
 .icon-btn:active, .btn-primary:active, .btn-secondary:active, .drawer-close:active,
 .ghost-btn:active, .chip:active, .mode-switch button:active,
-.task-form button:active, .task .due-chip:active {
+.task-form button:active, .task .due-chip:active, .task-pick-item:active {
   transform: scale(0.94);
 }
 .icon-btn {
@@ -812,6 +812,16 @@ input[type="range"] { width: 100%; max-width: 100%; accent-color: var(--accent);
    visible on light themes. The buttons don't need the glow to read as primary actions,
    so drop it here rather than fight the clipping. */
 .modal .tour-actions .drawer-close { box-shadow: none; }
+.task-pick-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--space-4); max-height: 46vh; overflow: auto; }
+.task-pick-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; text-align: left; padding: 12px 14px; border-radius: var(--radius-md);
+  background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+  font: inherit; font-size: 14px;
+}
+.task-pick-item:active { background: var(--surface-3); }
+.task-pick-item .tpi-meta { color: var(--text-dim); font-size: 12px; font-family: var(--font-mono); flex: none; }
+.task-pick-empty { color: var(--text-dim); font-size: 13px; text-align: center; padding: 10px 0 2px; margin: 0; }
 .change-list { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-4); }
 .change-item { display: flex; gap: var(--space-3); align-items: flex-start; font-size: 14px; line-height: 1.45; }
 .change-tag {
