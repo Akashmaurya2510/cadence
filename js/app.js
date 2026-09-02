@@ -8,9 +8,21 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.5.1";
+  const APP_VERSION = "1.6.0";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.6.0",
+      date: "September 2026",
+      title: "Cadence 1.6.0",
+      blurb: "The exported report image gets a real redesign.",
+      items: [
+        { tag: "Improved", text: "\"Save report image\" is fully redesigned: day labels on the weekly chart are no longer ambiguous single letters (T for both Tue and Thu) — now full day names with the date underneath." },
+        { tag: "New", text: "The exported image now includes a trend badge (▲/▼ vs last week), the actual date range for the week, a best-day/peak-hour insight line, and two more stat cards (Month, Longest streak)." },
+        { tag: "New", text: "Today / Week goal / Month / Completion cards in the exported image now show a small progress bar, not just a bare fraction." },
+        { tag: "Fix", text: "Removed the large empty gap at the bottom of the exported image — the canvas is now sized to fit its content instead of leaving dead space." },
+      ],
+    },
     {
       version: "1.5.1",
       date: "September 2026",
@@ -2821,7 +2833,7 @@
 
   function exportReportPng() {
     const canvas = document.createElement("canvas");
-    const W = 1080, H = 1350;
+    const W = 1080, H = 1520;
     canvas.width = W; canvas.height = H;
     const g = canvas.getContext("2d");
     const cs = getComputedStyle(document.documentElement);
@@ -2831,21 +2843,59 @@
     const dim = cs.getPropertyValue("--text-dim").trim() || "#9a9da3";
     const work = cs.getPropertyValue("--work").trim() || "#e7b54a";
     const border = cs.getPropertyValue("--border").trim() || "#2c2f36";
+    const track = cs.getPropertyValue("--track").trim() || "#2c2f36";
     const now = Date.now();
     const { todayFrom, weekFrom } = weekBounds(now);
+    const monthFrom = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
     const weekSec = sumRange(weekFrom, weekFrom + 7 * 86400000);
+    const lastWeekSec = sumRange(weekFrom - 7 * 86400000, weekFrom);
+    const delta = lastWeekSec === 0 ? null : Math.round(((weekSec - lastWeekSec) / lastWeekSec) * 100);
     const todayCount = countRange(todayFrom, todayFrom + 86400000);
     const weekCount = countRange(weekFrom, weekFrom + 7 * 86400000);
+    const monthCount = countRange(monthFrom, now + 86400000);
+    const rate = completionRate();
+    const day = bestDay();
+    const hour = bestHour();
+
     g.fillStyle = bg;
     g.fillRect(0, 0, W, H);
+
+    // Header
     g.fillStyle = work;
     g.beginPath(); g.arc(88, 92, 10, 0, Math.PI * 2); g.fill();
     g.fillStyle = text;
     g.font = "700 42px 'Space Grotesk', sans-serif";
     g.fillText("Cadence", 112, 106);
+
+    // Trend badge, top-right
+    if (delta != null && delta !== 0) {
+      const trendText = (delta > 0 ? "▲ " : "▼ ") + Math.abs(delta) + "% vs last week";
+      g.font = "600 22px 'JetBrains Mono', monospace";
+      const tw = g.measureText(trendText).width;
+      const padX = 20, pillH = 44;
+      const pillW = tw + padX * 2;
+      const px = W - 72 - pillW, py = 68;
+      g.fillStyle = surface;
+      g.strokeStyle = border;
+      g.lineWidth = 2;
+      roundRect(g, px, py, pillW, pillH, pillH / 2);
+      g.fill(); g.stroke();
+      g.fillStyle = delta > 0 ? work : dim;
+      g.textAlign = "center";
+      g.fillText(trendText, px + pillW / 2, py + 29);
+      g.textAlign = "left";
+    }
+
+    // Date range subtitle
+    const weekEnd = weekFrom + 6 * 86400000;
+    const rangeLabel = "This week  ·  " +
+      new Date(weekFrom).toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " – " +
+      new Date(weekEnd).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
     g.fillStyle = dim;
     g.font = "500 22px Inter, sans-serif";
-    g.fillText("This week", 72, 180);
+    g.fillText(rangeLabel, 72, 180);
+
+    // Big weekly total
     g.fillStyle = text;
     g.font = "600 96px 'JetBrains Mono', monospace";
     g.fillText(fmtMs(weekSec), 72, 280);
@@ -2853,16 +2903,18 @@
     g.font = "400 22px Inter, sans-serif";
     g.fillText(weekCount + " focus sessions  ·  streak " + streak() + "d  ·  best " + longestStreak() + "d", 72, 330);
 
-    const names = ["S", "M", "T", "W", "T", "F", "S"];
+    // Last 7 days chart, with unambiguous day + date labels
+    const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     let max = 1;
     const days = [];
     for (let i = 6; i >= 0; i--) {
       const ts = todayFrom - i * 86400000;
+      const d = new Date(ts);
       const m = Math.round(sumRange(ts, ts + 86400000) / 60);
-      days.push({ label: names[new Date(ts).getDay()], m });
+      days.push({ label: names[d.getDay()], date: d.getDate(), m, isToday: i === 0 });
       max = Math.max(max, m);
     }
-    const chartY = 420, chartH = 280, gap = 24, barW = 88;
+    const chartY = 420, chartH = 260, gap = 24, barW = 88;
     const chartX = 72;
     days.forEach((d0, i) => {
       const x = chartX + i * (barW + gap);
@@ -2871,26 +2923,49 @@
       g.fillRect(x, chartY, barW, chartH);
       g.fillStyle = work;
       g.fillRect(x, chartY + chartH - h, barW, h);
-      g.fillStyle = dim;
-      g.font = "500 20px 'JetBrains Mono', monospace";
       g.textAlign = "center";
-      g.fillText(d0.label, x + barW / 2, chartY + chartH + 36);
+      g.fillStyle = d0.isToday ? work : dim;
+      g.font = (d0.isToday ? "700 20px" : "500 20px") + " 'JetBrains Mono', monospace";
+      g.fillText(d0.label, x + barW / 2, chartY + chartH + 34);
+      g.fillStyle = dim;
+      g.font = "400 16px 'JetBrains Mono', monospace";
+      g.fillText(String(d0.date), x + barW / 2, chartY + chartH + 56);
       g.textAlign = "left";
     });
 
+    // Insight callout — best day / peak hour, same data the app surfaces on Reports
+    g.strokeStyle = border;
+    g.lineWidth = 2;
+    g.beginPath(); g.moveTo(72, 800); g.lineTo(W - 72, 800); g.stroke();
+    const bits = [];
+    if (day) {
+      const pretty = new Date(day.key + "T00:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+      bits.push("Best day " + pretty + " · " + fmtMs(day.sec));
+    }
+    if (hour) bits.push("Peak hour " + fmtHour(hour.hour));
+    if (bits.length) {
+      g.fillStyle = dim;
+      g.font = "400 20px Inter, sans-serif";
+      g.fillText(bits.join("   ·   "), 72, 836);
+    }
+
+    // Stat cards — 2 columns x 3 rows, with a progress bar where a goal applies
     const cards = [
-      { l: "Today", v: todayCount + " / " + settings.dailyGoal },
-      { l: "Week goal", v: weekCount + " / " + settings.weeklyGoal },
-      { l: "Avg focus", v: fmtMs(avgFocusSec()) },
-      { l: "Completion", v: (completionRate() == null ? "—" : completionRate() + "%") },
+      { l: "Today", v: todayCount + " / " + settings.dailyGoal, ratio: settings.dailyGoal ? todayCount / settings.dailyGoal : null },
+      { l: "Week goal", v: weekCount + " / " + settings.weeklyGoal, ratio: settings.weeklyGoal ? weekCount / settings.weeklyGoal : null },
+      { l: "Month", v: monthCount + " / " + settings.monthlyGoal, ratio: settings.monthlyGoal ? monthCount / settings.monthlyGoal : null },
+      { l: "Longest streak", v: longestStreak() + "d", ratio: null },
+      { l: "Avg focus", v: fmtMs(avgFocusSec()), ratio: null },
+      { l: "Completion", v: (rate == null ? "—" : rate + "%"), ratio: rate == null ? null : rate / 100 },
     ];
+    const cardW = 452, cardH = 156, colGap = 32, rowGap = 24, gridX = 72, gridY = 880;
     cards.forEach((c, i) => {
       const col = i % 2, row = Math.floor(i / 2);
-      const x = 72 + col * 484, y = 800 + row * 180;
+      const x = gridX + col * (cardW + colGap), y = gridY + row * (cardH + rowGap);
       g.fillStyle = surface;
       g.strokeStyle = border;
       g.lineWidth = 2;
-      roundRect(g, x, y, 452, 156, 24);
+      roundRect(g, x, y, cardW, cardH, 24);
       g.fill(); g.stroke();
       g.fillStyle = dim;
       g.font = "500 16px Inter, sans-serif";
@@ -2898,11 +2973,19 @@
       g.fillStyle = text;
       g.font = "600 40px 'JetBrains Mono', monospace";
       g.fillText(c.v, x + 28, y + 108);
+      if (c.ratio != null) {
+        const barTrackW = cardW - 56, barH = 10, bx = x + 28, by = y + 124;
+        g.fillStyle = track;
+        roundRect(g, bx, by, barTrackW, barH, barH / 2); g.fill();
+        const fillW = Math.max(barH, Math.min(barTrackW, barTrackW * Math.max(0, Math.min(1, c.ratio))));
+        g.fillStyle = work;
+        roundRect(g, bx, by, fillW, barH, barH / 2); g.fill();
+      }
     });
 
     g.fillStyle = dim;
     g.font = "400 18px Inter, sans-serif";
-    g.fillText("cadence  ·  local only  ·  " + new Date().toLocaleDateString(), 72, 1288);
+    g.fillText("cadence  ·  local only  ·  " + new Date().toLocaleDateString(), 72, H - 32);
 
     canvas.toBlob((blob) => {
       if (!blob) { toast("Could not create image"); return; }

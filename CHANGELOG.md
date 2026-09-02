@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0 — September 2026
+
+The exported report image gets a real redesign.
+
+- **Improved**: "Save report image" is fully redesigned: day labels on the weekly chart are no longer ambiguous single letters (T for both Tue and Thu) — now full day names with the date underneath.
+- **New**: The exported image now includes a trend badge (▲/▼ vs last week), the actual date range for the week, a best-day/peak-hour insight line, and two more stat cards (Month, Longest streak).
+- **New**: Today / Week goal / Month / Completion cards in the exported image now show a small progress bar, not just a bare fraction.
+- **Fix**: Removed the large empty gap at the bottom of the exported image — the canvas is now sized to fit its content instead of leaving dead space.
+
 ## 1.5.1 — September 2026
 
 Full day, full legend.
