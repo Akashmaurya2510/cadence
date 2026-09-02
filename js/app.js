@@ -8,9 +8,22 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.4.1";
+  const APP_VERSION = "1.5.0";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.5.0",
+      date: "September 2026",
+      title: "Cadence 1.5.0",
+      blurb: "Reports get a proper polish pass.",
+      items: [
+        { tag: "New", text: "\"This week\" now shows a trend badge (▲/▼ vs last week) right on the stat card, not just buried in a sentence." },
+        { tag: "New", text: "Breaks now surface your most recently-tagged tasks as quick-pick chips — no more scrolling to find \"Lunch\" every day." },
+        { tag: "Improved", text: "Tapping a day in \"Last 7 days\" no longer jumps you to the log — it shows that day's focus time and session count right there, with an optional \"View in log\" link." },
+        { tag: "Improved", text: "\"Focus by hour\" now has a minute/hour scale on the left, so bar heights actually mean something at a glance." },
+        { tag: "Improved", text: "The activity heatmap now shows month labels across the top, GitHub-style, and its tooltips show a real date instead of a raw ISO string." },
+      ],
+    },
     {
       version: "1.4.1",
       date: "September 2026",
@@ -1178,6 +1191,45 @@
     return { todayFrom, weekFrom: todayFrom - mondayOff * 86400000 };
   }
 
+  /** Tapping a day in the "Last 7 days" chart used to jump straight to the
+   *  log page — surprising on a quick glance. Now it shows an inline summary
+   *  instead, with an explicit link if you actually want the full log. */
+  function showWeekBarDetail(dk, col) {
+    const panel = $("weekBarDetail");
+    if (!panel) return;
+    const alreadySelected = panel.dataset.day === dk && !panel.hidden;
+    document.querySelectorAll("#weekBars .bar-col").forEach((c) => c.classList.remove("selected"));
+    if (alreadySelected) {
+      panel.hidden = true;
+      panel.dataset.day = "";
+      return;
+    }
+    col.classList.add("selected");
+    const from = new Date(dk + "T00:00:00").getTime();
+    const to = from + 86400000;
+    const sec = sumRange(from, to);
+    const count = countRange(from, to);
+    const pretty = new Date(from).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+    panel.innerHTML =
+      '<div class="bar-detail-date">' + pretty + "</div>" +
+      '<div class="bar-detail-stats">' + (sec ? fmtMs(sec) + " focus" : "No focus time") +
+        (count ? " · " + count + " session" + (count === 1 ? "" : "s") : "") + "</div>" +
+      (sec ? '<button type="button" class="text-btn" id="weekBarDetailLog">View in log</button>' : "");
+    panel.dataset.day = dk;
+    panel.hidden = false;
+    const logBtn = $("weekBarDetailLog");
+    if (logBtn) {
+      logBtn.onclick = () => {
+        state.logDayFilter = dk;
+        state.logFilter = "all";
+        state.logLimit = LOG_PAGE;
+        document.querySelectorAll("[data-filter]").forEach((x) => x.classList.remove("on"));
+        showPage("log");
+        toast("Showing " + dk);
+      };
+    }
+  }
+
   function renderReports() {
     renderBadges();
     const now = Date.now();
@@ -1194,6 +1246,19 @@
     $("statToday").textContent = fmtMs(todaySec);
     $("statTodayH").textContent = todayCount + " / " + settings.dailyGoal + " goal";
     $("statWeek").textContent = fmtMs(weekSec);
+    const trendEl = $("statWeekTrend");
+    if (trendEl) {
+      if (delta == null) {
+        trendEl.textContent = lastWeek === 0 && weekSec > 0 ? "First week logged" : "";
+        trendEl.className = "trend";
+      } else if (delta === 0) {
+        trendEl.textContent = "Same as last week";
+        trendEl.className = "trend flat";
+      } else {
+        trendEl.textContent = (delta > 0 ? "▲ " : "▼ ") + Math.abs(delta) + "% vs last week";
+        trendEl.className = "trend " + (delta > 0 ? "up" : "down");
+      }
+    }
     $("statWeekH").textContent = weekCount + " / " + settings.weeklyGoal + " goal";
     $("statStreak").textContent = streak() + "d";
     $("statStreakH").textContent = "best " + longestStreak() + "d";
@@ -1224,6 +1289,8 @@
     const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const bars = $("weekBars");
     bars.innerHTML = "";
+    const detailPanel = $("weekBarDetail");
+    if (detailPanel) { detailPanel.hidden = true; detailPanel.dataset.day = ""; }
     let max = 1;
     const days = [];
     for (let i = 6; i >= 0; i--) {
@@ -1238,15 +1305,13 @@
       const ts = todayFrom - (6 - i) * 86400000;
       const dk = dayKey(ts);
       const h = Math.max(4, Math.round((d0.m / max) * 130));
-      col.innerHTML = '<div class="bar" style="height:' + h + 'px" title="' + d0.m + ' min — click for log"></div><span>' + d0.label + "</span>";
-      col.onclick = () => {
-        state.logDayFilter = dk;
-        state.logFilter = "all";
-        state.logLimit = LOG_PAGE;
-        document.querySelectorAll("[data-filter]").forEach((x) => x.classList.remove("on"));
-        showPage("log");
-        toast("Showing " + dk);
-      };
+      col.innerHTML = '<div class="bar" style="height:' + h + 'px"></div><span>' + d0.label + "</span>";
+      col.setAttribute("role", "button");
+      col.tabIndex = 0;
+      col.setAttribute("aria-label", d0.label + ", " + d0.m + " minutes focus — show details");
+      const activate = () => showWeekBarDetail(dk, col);
+      col.onclick = activate;
+      col.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(); } };
       bars.appendChild(col);
     });
 
@@ -1268,25 +1333,46 @@
     });
     // Align grid so each column is a week starting Monday
     const start = weekFrom - 15 * 7 * 86400000;
-    for (let t = start; t < todayFrom + 86400000; t += 86400000) {
-      const cell = document.createElement("div");
-      const m = Math.round(map[dayKey(t)] || 0);
-      let cls = "";
-      if (m >= 100) cls = "h4"; else if (m >= 50) cls = "h3"; else if (m >= 25) cls = "h2"; else if (m > 0) cls = "h1";
-      cell.className = "heat-cell " + cls;
-      const dk = dayKey(t);
-      cell.title = dk + ": " + m + "m — open log";
-      cell.setAttribute("role", "button");
-      cell.tabIndex = 0;
-      cell.onclick = () => {
-        state.logDayFilter = dk;
-        state.logFilter = "all";
-        state.logLimit = LOG_PAGE;
-        document.querySelectorAll("[data-filter]").forEach((x) => x.classList.remove("on"));
-        showPage("log");
-        toast("Showing " + dk);
-      };
-      heat.appendChild(cell);
+    const heatWeeks = Math.ceil((todayFrom + 86400000 - start) / (7 * 86400000));
+    const monthsRow = $("heatMonths");
+    if (monthsRow) monthsRow.innerHTML = "";
+    let prevMonth = null;
+    for (let w = 0; w < heatWeeks; w++) {
+      const weekStart = start + w * 7 * 86400000;
+      if (monthsRow) {
+        const label = document.createElement("span");
+        const mo = new Date(weekStart).getMonth();
+        // Only label the column where a new month begins, GitHub-style —
+        // repeating it on every column would be noisy at this cell size.
+        if (mo !== prevMonth) {
+          label.textContent = new Date(weekStart).toLocaleDateString(undefined, { month: "short" });
+          prevMonth = mo;
+        }
+        monthsRow.appendChild(label);
+      }
+      for (let d = 0; d < 7; d++) {
+        const t = weekStart + d * 86400000;
+        if (t > todayFrom) break;
+        const cell = document.createElement("div");
+        const m = Math.round(map[dayKey(t)] || 0);
+        let cls = "";
+        if (m >= 100) cls = "h4"; else if (m >= 50) cls = "h3"; else if (m >= 25) cls = "h2"; else if (m > 0) cls = "h1";
+        cell.className = "heat-cell " + cls;
+        const dk = dayKey(t);
+        const pretty = new Date(t).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+        cell.title = pretty + (m ? " — " + m + "m" : " — no focus time") + " · tap for log";
+        cell.setAttribute("role", "button");
+        cell.tabIndex = 0;
+        cell.onclick = () => {
+          state.logDayFilter = dk;
+          state.logFilter = "all";
+          state.logLimit = LOG_PAGE;
+          document.querySelectorAll("[data-filter]").forEach((x) => x.classList.remove("on"));
+          showPage("log");
+          toast("Showing " + dk);
+        };
+        heat.appendChild(cell);
+      }
     }
     if (!Object.keys(map).length) {
       heat.innerHTML = '<div class="chart-empty" style="grid-column:1/-1">Complete focus sessions to fill the heatmap.</div>';
@@ -1303,6 +1389,17 @@
     const hourBars = $("hourBars");
     hourBars.innerHTML = "";
     const anyHour = hours.some((h) => h.m > 0);
+    const hourAxis = $("hourAxis");
+    if (hourAxis) {
+      hourAxis.innerHTML = "";
+      if (anyHour) {
+        [hourMax, hourMax / 2, 0].forEach((v) => {
+          const s = document.createElement("span");
+          s.textContent = (v >= 60 ? (v / 60).toFixed(v % 60 ? 1 : 0) + "h" : Math.round(v) + "m");
+          hourAxis.appendChild(s);
+        });
+      }
+    }
     if (!anyHour) {
       hourBars.innerHTML = '<div class="chart-empty">No hourly focus data this week yet.</div>';
     } else {
@@ -1828,6 +1925,23 @@
   }
 
   let taskPromptResolver = null;
+  /** Task ids most recently tagged to a break, newest first — powers the
+   *  quick-pick chips so repeat picks like "Lunch" don't require scrolling
+   *  the full task list every time. */
+  function recentBreakTaskIds(limit) {
+    const seen = new Set();
+    const ids = [];
+    const sorted = state.sessions
+      .filter((s) => s.mode !== "focus" && s.taskId)
+      .sort((a, b) => b.endedAt - a.endedAt);
+    for (const s of sorted) {
+      if (seen.has(s.taskId)) continue;
+      seen.add(s.taskId);
+      ids.push(s.taskId);
+      if (ids.length >= limit) break;
+    }
+    return ids;
+  }
   function openTaskPromptModal(mode) {
     return new Promise((resolve) => {
       const list = $("taskPromptList");
@@ -1838,9 +1952,36 @@
         : "Tag it to a task if it helps — like lunch or an errand — or just continue.";
       const candidates = state.tasks.filter((t) => !t.done && !t.archived && !t.deleted);
       list.innerHTML = "";
+      function settle(result) {
+        $("taskPromptModal").classList.remove("open");
+        taskPromptResolver = null;
+        resolve(result);
+      }
       if (!candidates.length) {
         list.innerHTML = '<p class="task-pick-empty">No open tasks yet.</p>';
       } else {
+        if (!isFocus) {
+          const recentTasks = recentBreakTaskIds(4)
+            .map((id) => candidates.find((t) => t.id === id))
+            .filter(Boolean);
+          if (recentTasks.length) {
+            const recentWrap = document.createElement("div");
+            recentWrap.className = "task-pick-recent";
+            recentTasks.forEach((t) => {
+              const chip = document.createElement("button");
+              chip.type = "button";
+              chip.className = "task-pick-chip";
+              chip.textContent = t.title;
+              chip.onclick = () => settle({ taskId: t.id });
+              recentWrap.appendChild(chip);
+            });
+            list.appendChild(recentWrap);
+            const label = document.createElement("div");
+            label.className = "task-pick-sublabel";
+            label.textContent = "All tasks";
+            list.appendChild(label);
+          }
+        }
         candidates.forEach((t) => {
           const btn = document.createElement("button");
           btn.type = "button";
@@ -1851,11 +1992,6 @@
           btn.onclick = () => settle({ taskId: t.id });
           list.appendChild(btn);
         });
-      }
-      function settle(result) {
-        $("taskPromptModal").classList.remove("open");
-        taskPromptResolver = null;
-        resolve(result);
       }
       taskPromptResolver = settle;
       $("taskPromptModal").classList.add("open");

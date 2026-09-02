@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.5.0 — September 2026
+
+Reports get a proper polish pass.
+
+- **New**: "This week" now shows a trend badge (▲/▼ vs last week) right on the stat card, not just buried in a sentence.
+- **New**: Breaks now surface your most recently-tagged tasks as quick-pick chips — no more scrolling to find "Lunch" every day.
+- **Improved**: Tapping a day in "Last 7 days" no longer jumps you to the log — it shows that day's focus time and session count right there, with an optional "View in log" link.
+- **Improved**: "Focus by hour" now has a minute/hour scale on the left, so bar heights actually mean something at a glance.
+- **Improved**: The activity heatmap now shows month labels across the top, GitHub-style, and its tooltips show a real date instead of a raw ISO string.
+
 ## 1.4.1 — September 2026
 
 Trash upkeep, and a few quiet fixes.

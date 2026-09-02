@@ -172,7 +172,7 @@
     </div>
     <div class="stats" id="statsGrid">
       <div class="stat"><div class="l">Today</div><div class="v" id="statToday">0m</div><div class="h" id="statTodayH">0 / 8 goal</div></div>
-      <div class="stat"><div class="l">This week</div><div class="v" id="statWeek">0m</div><div class="h" id="statWeekH">0 / 40 goal</div></div>
+      <div class="stat"><div class="l">This week</div><div class="v" id="statWeek">0m</div><div class="h" id="statWeekH">0 / 40 goal</div><div class="trend" id="statWeekTrend"></div></div>
       <div class="stat"><div class="l">Streak</div><div class="v" id="statStreak">0d</div><div class="h" id="statStreakH">consecutive days</div></div>
       <div class="stat"><div class="l">Month</div><div class="v" id="statMonth">0m</div><div class="h" id="statMonthH">0 / 160 goal</div></div>
     </div>
@@ -182,9 +182,18 @@
     </div>
     <p class="callout" id="statCallout"></p>
     <div class="card"><h2>Badges</h2><div class="badges-row" id="badgesRow"></div></div>
-    <div class="card"><h2>Last 7 days</h2><div class="bars" id="weekBars"></div></div>
-    <div class="card"><h2>Activity</h2><div class="heat-wrap"><div class="heat-dows" id="heatDows" aria-hidden="true"></div><div class="heat"><div class="heat-grid" id="heatGrid"></div></div></div></div>
-    <div class="card"><h2>Focus by hour this week</h2><div class="bars hour-bars" id="hourBars"></div></div>
+    <div class="card">
+      <h2>Last 7 days</h2>
+      <div class="bars" id="weekBars"></div>
+      <div class="bar-detail" id="weekBarDetail" hidden></div>
+    </div>
+    <div class="card"><h2>Activity</h2><div class="heat-wrap"><div class="heat-dows" id="heatDows" aria-hidden="true"></div><div class="heat"><div class="heat-months" id="heatMonths" aria-hidden="true"></div><div class="heat-grid" id="heatGrid"></div></div></div></div>
+    <div class="card"><h2>Focus by hour this week</h2>
+      <div class="hour-chart-wrap">
+        <div class="hour-axis" id="hourAxis"></div>
+        <div class="bars hour-bars" id="hourBars"></div>
+      </div>
+    </div>
     <div class="card" id="taskBreakdownCard">
       <h2>Time by task</h2>
       <div id="taskBreakdown"></div>
