@@ -554,6 +554,12 @@ textarea {
 .heat-cell.h3 { background: color-mix(in oklab, var(--work) 78%, var(--track)); }
 .heat-cell.h4 { background: var(--work); }
 .heat-cell:hover, .heat-cell:focus-visible { transform: scale(1.2); outline: none; }
+.heat-legend {
+  display: flex; align-items: center; justify-content: flex-end; gap: 4px;
+  margin-top: var(--space-3); font-size: 11px; color: var(--text-dim); font-family: var(--font-mono);
+}
+.heat-legend .heat-cell { width: 12px; height: 12px; flex-shrink: 0; cursor: default; }
+.heat-legend .heat-cell:hover { transform: none; }
 
 /* Task list polish */
 .task {

@@ -8,9 +8,19 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.5.0";
+  const APP_VERSION = "1.5.1";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.5.1",
+      date: "September 2026",
+      title: "Cadence 1.5.1",
+      blurb: "Full day, full legend.",
+      items: [
+        { tag: "Fix", text: "\"Focus by hour\" now covers all 24 hours instead of just 6am–10pm — late-night or early-morning sessions actually show up now." },
+        { tag: "New", text: "Added a \"Less → More\" legend under the activity heatmap, matching GitHub's contribution graph, so the color scale is explained instead of implied." },
+      ],
+    },
     {
       version: "1.5.0",
       date: "September 2026",
@@ -1377,8 +1387,10 @@
     if (!Object.keys(map).length) {
       heat.innerHTML = '<div class="chart-empty" style="grid-column:1/-1">Complete focus sessions to fill the heatmap.</div>';
     }
+    const legend = $("heatLegend");
+    if (legend) legend.hidden = !Object.keys(map).length;
 
-    const hours = Array.from({ length: 17 }, (_, i) => ({ hour: i + 6, m: 0 }));
+    const hours = Array.from({ length: 24 }, (_, i) => ({ hour: i, m: 0 }));
     focusSessions().forEach((s) => {
       if (s.endedAt < weekFrom) return;
       const h = new Date(s.startedAt).getHours();

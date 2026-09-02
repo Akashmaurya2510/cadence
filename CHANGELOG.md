@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.1 — September 2026
+
+Full day, full legend.
+
+- **Fix**: "Focus by hour" now covers all 24 hours instead of just 6am–10pm — late-night or early-morning sessions actually show up now.
+- **New**: Added a "Less → More" legend under the activity heatmap, matching GitHub's contribution graph, so the color scale is explained instead of implied.
+
 ## 1.5.0 — September 2026
 
 Reports get a proper polish pass.
