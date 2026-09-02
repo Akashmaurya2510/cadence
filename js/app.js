@@ -8,9 +8,21 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.4.0";
+  const APP_VERSION = "1.4.1";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.4.1",
+      date: "September 2026",
+      title: "Cadence 1.4.1",
+      blurb: "Trash upkeep, and a few quiet fixes.",
+      items: [
+        { tag: "New", text: "\"Empty trash\" button in the Deleted tab — permanently clear everything in there in one go, with a confirm first." },
+        { tag: "New", text: "Deleted tasks now auto-expire after 30 days, like a normal trash folder. Each one shows a countdown so nothing disappears as a surprise." },
+        { tag: "Fix", text: "Screen readers now announce toast messages (deletes, undos, etc.) instead of missing them silently." },
+        { tag: "Improved", text: "Log search no longer re-renders your whole history on every keystroke — it waits a beat before filtering." },
+      ],
+    },
     {
       version: "1.4.0",
       date: "September 2026",
@@ -367,6 +379,16 @@
       }
     });
     return changed;
+  }
+  const TRASH_RETENTION_DAYS = 30;
+  /** Deleted tasks that have sat in the Deleted tab past the retention window
+   *  are purged automatically, same idea as an email trash folder. Their past
+   *  sessions are unaffected — they keep their snapshotted title. */
+  function purgeExpiredTrash() {
+    const cutoff = Date.now() - TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+    const before = state.tasks.length;
+    state.tasks = state.tasks.filter((t) => !(t.deleted && t.deletedAt && t.deletedAt < cutoff));
+    return state.tasks.length !== before;
   }
   function isValidSession(s) {
     return s && typeof s === "object"
@@ -784,6 +806,7 @@
   function renderTasks() {
     const list = $("taskList");
     list.innerHTML = "";
+    if ($("emptyTrashBtn")) $("emptyTrashBtn").hidden = state.taskView !== "deleted";
     const open = state.tasks.filter((t) => !t.done && !t.archived && !t.deleted).length;
     $("openCount").textContent = open ? open + " open" : "";
     const items = visibleTasks();
@@ -803,12 +826,18 @@
         const row = document.createElement("div");
         row.className = "task deleted-row";
         const sessionCount = t.pomodoros || 0;
+        const daysLeft = t.deletedAt
+          ? Math.max(0, TRASH_RETENTION_DAYS - Math.floor((Date.now() - t.deletedAt) / 86400000))
+          : TRASH_RETENTION_DAYS;
+        const expiryLabel = daysLeft <= 0 ? "Auto-deletes soon" : "Auto-deletes in " + daysLeft + "d";
         row.innerHTML =
           '<div class="body">' +
             '<div class="title">' + escapeHtml(t.title) + "</div>" +
             '<div class="meta"><span class="meta-text">' +
-              (sessionCount ? sessionCount + " session" + (sessionCount === 1 ? "" : "s") + " logged · kept in history" : "No sessions logged") +
-            "</span></div>" +
+              (sessionCount ? sessionCount + " session" + (sessionCount === 1 ? "" : "s") + " logged" : "No sessions logged") +
+            "</span>" +
+            '<span class="meta-dot">&middot;</span>' +
+            '<span class="meta-text">' + expiryLabel + "</span></div>" +
           "</div>" +
           '<div class="actions">' +
             '<button type="button" class="iconish restore-btn" aria-label="Restore" title="Restore">↺</button>' +
@@ -1976,6 +2005,22 @@
       });
     };
   }
+  if ($("emptyTrashBtn")) {
+    $("emptyTrashBtn").onclick = async () => {
+      const trashed = state.tasks.filter((t) => t.deleted);
+      if (!trashed.length) { toast("Trash is already empty"); return; }
+      const count = trashed.length;
+      const ok = await askConfirm({
+        title: "Empty trash?",
+        text: "Permanently deletes " + count + " task" + (count === 1 ? "" : "s") + " — this can't be undone. Their past sessions stay in your history, labeled as deleted.",
+        ok: "Empty trash",
+      });
+      if (!ok) return;
+      state.tasks = state.tasks.filter((t) => !t.deleted);
+      save(); renderTasks();
+      toast(count + " task" + (count === 1 ? "" : "s") + " permanently deleted");
+    };
+  }
   document.querySelectorAll("[data-task-view]").forEach((b) => {
     b.onclick = () => {
       state.taskView = b.dataset.taskView;
@@ -2269,10 +2314,15 @@
       renderLog();
     };
   });
+  let logSearchTimer = null;
   $("logSearch").oninput = () => {
-    state.logSearch = $("logSearch").value;
-    state.logLimit = LOG_PAGE;
-    renderLog();
+    clearTimeout(logSearchTimer);
+    const value = $("logSearch").value;
+    logSearchTimer = setTimeout(() => {
+      state.logSearch = value;
+      state.logLimit = LOG_PAGE;
+      renderLog();
+    }, 180);
   };
   $("logTaskFilter").onchange = () => {
     state.logTaskFilter = $("logTaskFilter").value;
@@ -2786,6 +2836,7 @@
 
   const hadData = load();
   if (resetRecurringTasks()) save();
+  if (purgeExpiredTrash()) save();
   checkBadgeUnlocks(true);
   const hash = (location.hash || "").replace("#", "");
   try { renderAll(); } catch (e) { console.error(e); toast("Something went wrong rendering. Try Settings → Clear, or import a backup."); }

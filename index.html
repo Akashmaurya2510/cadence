@@ -150,6 +150,7 @@
         <button class="chip" data-task-view="paused">Paused</button>
         <button class="chip" data-task-view="deleted">Deleted</button>
         <button class="chip" id="clearDoneTasksBtn" type="button">Clear completed</button>
+        <button class="chip" id="emptyTrashBtn" type="button" hidden>Empty trash</button>
       </div>
       <div id="taskList"></div>
     </div>
@@ -470,7 +471,7 @@
   </div>
 </div>
 
-<div class="toast" id="toast" hidden>
+<div class="toast" id="toast" hidden role="status" aria-live="polite" aria-atomic="true">
   <span id="toastMsg"></span>
   <button type="button" id="toastAction">Undo</button>
 </div>

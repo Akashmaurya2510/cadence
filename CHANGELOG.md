@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.1 — September 2026
+
+Trash upkeep, and a few quiet fixes.
+
+- **New**: "Empty trash" button in the Deleted tab — permanently clear everything in there in one go, with a confirm first.
+- **New**: Deleted tasks now auto-expire after 30 days, like a normal trash folder. Each one shows a countdown so nothing disappears as a surprise.
+- **Fix**: Screen readers now announce toast messages (deletes, undos, etc.) instead of missing them silently.
+- **Improved**: Log search no longer re-renders your whole history on every keystroke — it waits a beat before filtering.
+
 ## 1.4.0 — September 2026
 
 Deleting is a two-step now.
