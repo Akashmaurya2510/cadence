@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.2 — September 2026
+
+Tidying up after deleted tasks.
+
+- **Fix**: Session history now remembers a task's name even after you delete it, instead of showing a bare "Deleted task" — both in the log itself and in the task filter dropdown.
+- **Improved**: Older sessions logged before this fix (with no name to recover) are grouped into a single "Deleted tasks (name unavailable)" filter entry instead of a wall of identical, indistinguishable rows.
+
 ## 1.3.1 — September 2026
 
 Fix a typo after the fact.

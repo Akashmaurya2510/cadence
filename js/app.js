@@ -8,9 +8,19 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.3.1";
+  const APP_VERSION = "1.3.2";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.3.2",
+      date: "September 2026",
+      title: "Cadence 1.3.2",
+      blurb: "Tidying up after deleted tasks.",
+      items: [
+        { tag: "Fix", text: "Session history now remembers a task's name even after you delete it, instead of showing a bare \"Deleted task\" — both in the log itself and in the task filter dropdown." },
+        { tag: "Improved", text: "Older sessions logged before this fix (with no name to recover) are grouped into a single \"Deleted tasks (name unavailable)\" filter entry instead of a wall of identical, indistinguishable rows." },
+      ],
+    },
     {
       version: "1.3.1",
       date: "September 2026",
@@ -1265,15 +1275,29 @@
       }
       if (state.logTaskFilter !== "all") {
         if (state.logTaskFilter === "_none" && s.taskId) return false;
-        if (state.logTaskFilter !== "_none" && s.taskId !== state.logTaskFilter) return false;
+        if (state.logTaskFilter === "_deleted_unknown") {
+          const isOrphanNoTitle = s.taskId && !state.tasks.some((t) => t.id === s.taskId) && !s.taskTitle;
+          if (!isOrphanNoTitle) return false;
+        } else if (state.logTaskFilter !== "_none" && s.taskId !== state.logTaskFilter) {
+          return false;
+        }
       }
       if (q) {
-        const task = state.tasks.find((t) => t.id === s.taskId);
-        const hay = ((task && task.title) || "") + " " + (s.note || "") + " " + MODE_LABEL[s.mode];
+        const hay = sessionTaskTitle(s) + " " + (s.note || "") + " " + MODE_LABEL[s.mode];
         if (!hay.toLowerCase().includes(q)) return false;
       }
       return true;
     }).sort((a, b) => b.endedAt - a.endedAt);
+  }
+
+  /** Best-available label for the task a session was logged against — falls
+   *  back to a snapshot taken at logging time if the task was since deleted,
+   *  so history and filters stay readable instead of showing raw "Deleted task". */
+  function sessionTaskTitle(s) {
+    if (!s.taskId) return "";
+    const t = state.tasks.find((x) => x.id === s.taskId);
+    if (t) return t.title;
+    return s.taskTitle || "";
   }
 
   function renderLogFilters() {
@@ -1288,13 +1312,30 @@
       opt.textContent = t.title;
       sel.appendChild(opt);
     });
-    Array.from(ids).forEach((id) => {
-      if (state.tasks.some((t) => t.id === id)) return;
-      const opt = document.createElement("option");
-      opt.value = id;
-      opt.textContent = "Deleted task";
-      sel.appendChild(opt);
-    });
+    const deletedIds = Array.from(ids).filter((id) => !state.tasks.some((t) => t.id === id));
+    const namedDeleted = deletedIds.filter((id) => state.sessions.some((s) => s.taskId === id && s.taskTitle));
+    const unnamedCount = deletedIds.length - namedDeleted.length;
+    if (namedDeleted.length || unnamedCount) {
+      const group = document.createElement("optgroup");
+      group.label = "Deleted tasks";
+      namedDeleted.forEach((id) => {
+        const sample = state.sessions.find((s) => s.taskId === id && s.taskTitle);
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = sample.taskTitle + " (deleted)";
+        group.appendChild(opt);
+      });
+      if (unnamedCount) {
+        // Older sessions logged before Cadence started remembering a task's
+        // name — nothing to tell them apart by, so group them as one entry
+        // instead of a wall of identical "Deleted task" rows.
+        const opt = document.createElement("option");
+        opt.value = "_deleted_unknown";
+        opt.textContent = "Deleted tasks (name unavailable)";
+        group.appendChild(opt);
+      }
+      sel.appendChild(group);
+    }
     sel.value = current;
   }
 
@@ -1322,6 +1363,7 @@
       const box = sec.querySelector(".log-list");
       list.forEach((s) => {
         const task = state.tasks.find((t) => t.id === s.taskId);
+        const titleLabel = task ? task.title : (s.taskId ? (s.taskTitle ? s.taskTitle + " (deleted)" : "") : "");
         const row = document.createElement("div");
         row.className = "log-row";
         row.tabIndex = 0;
@@ -1330,7 +1372,7 @@
         const t0 = new Date(s.startedAt), t1 = new Date(s.endedAt);
         row.innerHTML =
           '<span class="dot ' + (s.mode === "focus" ? "focus" : "break") + '"></span>' +
-          '<div style="flex:1"><div>' + MODE_LABEL[s.mode] + (task ? " · " + escapeHtml(task.title) : "") + "</div>" +
+          '<div style="flex:1"><div>' + MODE_LABEL[s.mode] + (titleLabel ? " · " + escapeHtml(titleLabel) : "") + "</div>" +
           '<div class="today-line">' + pad(t0.getHours()) + ":" + pad(t0.getMinutes()) + " – " + pad(t1.getHours()) + ":" + pad(t1.getMinutes()) + "</div>" +
           (s.note ? '<div class="log-note">' + escapeHtml(s.note) + "</div>" : '<div class="log-note log-note-empty">Add a note</div>') +
           '</div><div style="text-align:right"><div>' + Math.round(s.durationSec / 60) + "m</div>" +
@@ -1374,6 +1416,12 @@
       taskId: mode === "focus" ? (state.activeTaskId || undefined) : (state.breakTaskId || undefined),
       completed,
     };
+    // Snapshot the task's title at logging time so history still reads
+    // sensibly if the task is renamed or deleted later.
+    if (entry.taskId) {
+      const t = state.tasks.find((x) => x.id === entry.taskId);
+      if (t) entry.taskTitle = t.title;
+    }
     state.sessions.push(entry);
     if (completed && mode === "focus") { checkAuroraUnlock(); checkBadgeUnlocks(); }
     if (completed && mode === "focus" && state.activeTaskId) {
