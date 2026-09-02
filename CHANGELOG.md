@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0 — September 2026
+
+Deleting is a two-step now.
+
+- **New**: Deleting a task no longer removes it outright — it moves to a new "Deleted" tab, where you can restore it or delete it forever.
+- **New**: "Delete forever" from that tab is the only way to permanently remove a task now, and it asks first.
+
 ## 1.3.2 — September 2026
 
 Tidying up after deleted tasks.

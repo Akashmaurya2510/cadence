@@ -8,9 +8,19 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.3.2";
+  const APP_VERSION = "1.4.0";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.4.0",
+      date: "September 2026",
+      title: "Cadence 1.4.0",
+      blurb: "Deleting is a two-step now.",
+      items: [
+        { tag: "New", text: "Deleting a task no longer removes it outright — it moves to a new \"Deleted\" tab, where you can restore it or delete it forever." },
+        { tag: "New", text: "\"Delete forever\" from that tab is the only way to permanently remove a task now, and it asks first." },
+      ],
+    },
     {
       version: "1.3.2",
       date: "September 2026",
@@ -339,6 +349,8 @@
       remainingSec: rem > 0 && rem <= 90 * 60 ? Math.floor(rem) : 0,
       recurring: !!t.recurring,
       doneOnDay: t.doneOnDay || null,
+      deleted: !!t.deleted,
+      deletedAt: t.deletedAt || null,
     };
   }
   /** Recurring tasks marked done on a previous day pop back to not-done. Returns true if anything changed. */
@@ -745,7 +757,11 @@
 
   function visibleTasks() {
     const view = state.taskView;
+    if (view === "deleted") {
+      return state.tasks.filter((t) => t.deleted).sort((a, b) => (b.deletedAt || 0) - (a.deletedAt || 0));
+    }
     let list = state.tasks.filter((t) => {
+      if (t.deleted) return false;
       if (view === "paused") return t.archived;
       if (t.archived) return false;
       if (view === "today") return t.due === "today" && !t.done;
@@ -768,7 +784,7 @@
   function renderTasks() {
     const list = $("taskList");
     list.innerHTML = "";
-    const open = state.tasks.filter((t) => !t.done && !t.archived).length;
+    const open = state.tasks.filter((t) => !t.done && !t.archived && !t.deleted).length;
     $("openCount").textContent = open ? open + " open" : "";
     const items = visibleTasks();
     if (!items.length) {
@@ -777,8 +793,31 @@
         today: "Nothing marked for today.",
         later: "Nothing parked for later.",
         paused: "No paused tasks.",
+        deleted: "Nothing deleted. Anything you delete lands here first.",
       }[state.taskView] || "No tasks here.";
       list.innerHTML = '<p class="today-line" style="padding:16px;text-align:center;border:1px solid var(--border);border-radius:12px;background:var(--surface)">' + empty + "</p>";
+      return;
+    }
+    if (state.taskView === "deleted") {
+      items.forEach((t) => {
+        const row = document.createElement("div");
+        row.className = "task deleted-row";
+        const sessionCount = t.pomodoros || 0;
+        row.innerHTML =
+          '<div class="body">' +
+            '<div class="title">' + escapeHtml(t.title) + "</div>" +
+            '<div class="meta"><span class="meta-text">' +
+              (sessionCount ? sessionCount + " session" + (sessionCount === 1 ? "" : "s") + " logged · kept in history" : "No sessions logged") +
+            "</span></div>" +
+          "</div>" +
+          '<div class="actions">' +
+            '<button type="button" class="iconish restore-btn" aria-label="Restore" title="Restore">↺</button>' +
+            '<button type="button" class="iconish purge-btn" aria-label="Delete forever" title="Delete forever">🗑</button>' +
+          "</div>";
+        row.querySelector(".restore-btn").onclick = (e) => { e.stopPropagation(); restoreTask(t); };
+        row.querySelector(".purge-btn").onclick = (e) => { e.stopPropagation(); purgeTask(t); };
+        list.appendChild(row);
+      });
       return;
     }
     items.forEach((t, idx) => {
@@ -987,15 +1026,32 @@
     save(); renderTasks();
   }
   function deleteTask(t) {
-    const idx = state.tasks.findIndex((x) => x.id === t.id);
-    const copy = { ...t };
-    state.tasks = state.tasks.filter((x) => x.id !== t.id);
+    t.deleted = true;
+    t.deletedAt = Date.now();
     if (state.activeTaskId === t.id) state.activeTaskId = null;
     save(); renderTasks();
-    toast("Task deleted", "Undo", () => {
-      state.tasks.splice(Math.min(idx, state.tasks.length), 0, copy);
+    toast("Moved to Deleted", "Undo", () => {
+      t.deleted = false;
+      t.deletedAt = null;
       save(); renderTasks();
     });
+  }
+  function restoreTask(t) {
+    t.deleted = false;
+    t.deletedAt = null;
+    save(); renderTasks();
+    toast("Task restored");
+  }
+  async function purgeTask(t) {
+    const ok = await askConfirm({
+      title: "Delete task permanently?",
+      text: '"' + t.title + '" will be gone for good — this can\'t be undone. Its past sessions stay in your history, just labeled as deleted.',
+      ok: "Delete forever",
+    });
+    if (!ok) return;
+    state.tasks = state.tasks.filter((x) => x.id !== t.id);
+    save(); renderTasks();
+    toast("Task permanently deleted");
   }
   function duplicateTask(t) {
     const copy = normalizeTask({
@@ -1751,7 +1807,7 @@
       $("taskPromptText").textContent = isFocus
         ? "Pick a task for this focus block, or start without one."
         : "Tag it to a task if it helps — like lunch or an errand — or just continue.";
-      const candidates = state.tasks.filter((t) => !t.done && !t.archived);
+      const candidates = state.tasks.filter((t) => !t.done && !t.archived && !t.deleted);
       list.innerHTML = "";
       if (!candidates.length) {
         list.innerHTML = '<p class="task-pick-empty">No open tasks yet.</p>';
@@ -1890,7 +1946,7 @@
   };
   if ($("clearDoneTasksBtn")) {
     $("clearDoneTasksBtn").onclick = async () => {
-      const done = state.tasks.filter((t) => t.done);
+      const done = state.tasks.filter((t) => t.done && !t.deleted);
       if (!done.length) { toast("No completed tasks to clear"); return; }
       // Recurring tasks aren't deleted — clearing just resets them for their next occurrence.
       const toRemove = done.filter((t) => !t.recurring);
