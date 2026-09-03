@@ -8,9 +8,20 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.7.2";
+  const APP_VERSION = "1.8.0";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.8.0",
+      date: "September 2026",
+      title: "Cadence 1.8.0",
+      blurb: "Longer sessions, cleaner steps.",
+      items: [
+        { tag: "Improved", text: "Focus length in Settings now runs 15–180 min in clean 15-min steps, instead of 5–60 in steps of 5 — room for full 2–3 hour deep-work blocks." },
+        { tag: "Improved", text: "A task's per-task focus length (tap the length chip on its card) now cycles through the same 15–180 range, so it matches Settings exactly." },
+        { tag: "Fix", text: "If your saved focus length didn't land on the new 15-min grid (e.g. the old default of 25 min), it's snapped to the nearest valid value automatically — nothing to reconfigure." },
+      ],
+    },
     {
       version: "1.7.2",
       date: "September 2026",
@@ -292,13 +303,13 @@
   function durationFor(mode) {
     if (mode === "focus") {
       const t = state.activeTaskId && state.tasks.find((x) => x.id === state.activeTaskId);
-      if (t && t.focusMin >= 5) return t.focusMin * 60;
+      if (t && t.focusMin >= 15) return t.focusMin * 60;
       return settings.focus * 60;
     }
     return (mode === "short" ? settings.short : settings.long) * 60;
   }
   function taskFocusDuration(t) {
-    if (t && t.focusMin >= 5) return t.focusMin * 60;
+    if (t && t.focusMin >= 15) return t.focusMin * 60;
     return settings.focus * 60;
   }
   /** Persist leftover focus seconds onto the current task (when paused / switching). */
@@ -407,6 +418,14 @@
       // Tick sound is always available; only the mute button (defaults to muted) controls it.
       settings.tickSound = true;
       if (settings.muted == null) settings.muted = true;
+      // Focus length's stepper grid moved from 5–60/step 5 to 15–180/step 15.
+      // Snap any existing value that doesn't land on the new grid (e.g. the
+      // old default of 25) to the nearest valid one, so it isn't stuck
+      // showing a number the stepper can no longer produce.
+      if (typeof settings.focus === "number") {
+        const snapped = Math.min(180, Math.max(15, Math.round((settings.focus - 15) / 15) * 15 + 15));
+        if (snapped !== settings.focus) settings.focus = snapped;
+      }
       return true;
     } catch { return false; }
   }
@@ -419,10 +438,10 @@
       done: !!t.done,
       pomodoros: Number(t.pomodoros) || 0,
       target: Number(t.target) || 0,
-      focusMin: focusMin >= 5 && focusMin <= 90 ? focusMin : 0,
+      focusMin: focusMin >= 15 && focusMin <= 180 ? focusMin : 0,
       due: t.due === "today" || t.due === "later" ? t.due : null,
       archived: !!t.archived,
-      remainingSec: rem > 0 && rem <= 90 * 60 ? Math.floor(rem) : 0,
+      remainingSec: rem > 0 && rem <= 180 * 60 ? Math.floor(rem) : 0,
       recurring: !!t.recurring,
       doneOnDay: t.doneOnDay || null,
       deleted: !!t.deleted,
@@ -1020,8 +1039,15 @@
       if (focusLen) {
         focusLen.onclick = (e) => {
           e.stopPropagation();
-          const cycle = [0, 15, 25, 45, 50, 90];
-          const i = cycle.indexOf(t.focusMin || 0);
+          const cycle = [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180];
+          const cur = t.focusMin || 0;
+          let i = cycle.indexOf(cur);
+          if (i === -1) {
+            // A legacy custom length that predates this 15-min grid (e.g. 25m,
+            // 50m) — snap to its nearest neighbor so it advances sensibly
+            // instead of jumping straight back to "default".
+            i = cycle.reduce((best, v, idx) => Math.abs(v - cur) < Math.abs(cycle[best] - cur) ? idx : best, 0);
+          }
           t.focusMin = cycle[(i + 1) % cycle.length];
           t.remainingSec = 0; // length changed — start fresh next time
           if (t.id === state.activeTaskId && state.mode === "focus" && !state.running) {
@@ -2405,7 +2431,11 @@
   }
   function stepperChange(el, dir) {
     const key = el.dataset.key, min = +el.dataset.min, max = +el.dataset.max, step = +el.dataset.step;
-    settings[key] = Math.min(max, Math.max(min, settings[key] + dir * step));
+    // Round-trip through "steps from min" rather than adding directly, so a
+    // value that doesn't land on the current grid (e.g. after the grid
+    // itself changes) snaps to the nearest valid step instead of drifting.
+    const steps = Math.round((settings[key] - min) / step) + dir;
+    settings[key] = Math.min(max, Math.max(min, min + steps * step));
     refreshStepper(el);
     if (!state.running) state.secondsLeft = durationFor(state.mode);
     renderTimer(); save();

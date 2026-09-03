@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.8.0 — September 2026
+
+Longer sessions, cleaner steps.
+
+- **Improved**: Focus length in Settings now runs 15–180 min in clean 15-min steps, instead of 5–60 in steps of 5 — room for full 2–3 hour deep-work blocks.
+- **Improved**: A task's per-task focus length (tap the length chip on its card) now cycles through the same 15–180 range, so it matches Settings exactly.
+- **Fix**: If your saved focus length didn't land on the new 15-min grid (e.g. the old default of 25 min), it's snapped to the nearest valid value automatically — nothing to reconfigure.
+
 ## 1.7.2 — September 2026
 
 Rename instead of delete-and-recreate.
