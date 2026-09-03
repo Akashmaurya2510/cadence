@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.1 — September 2026
+
+Clubbing the unclubbed.
+
+- **Fix**: "Time by task" now groups nameless deleted tasks into one "Deleted tasks (name unavailable)" row instead of a separate identical "Deleted task" row for each one — matching how the Log's task filter already handles this.
+
 ## 1.7.0 — September 2026
 
 See where your time actually goes.

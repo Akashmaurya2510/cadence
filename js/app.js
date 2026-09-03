@@ -8,9 +8,18 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.7.0";
+  const APP_VERSION = "1.7.1";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.7.1",
+      date: "September 2026",
+      title: "Cadence 1.7.1",
+      blurb: "Clubbing the unclubbed.",
+      items: [
+        { tag: "Fix", text: "\"Time by task\" now groups nameless deleted tasks into one \"Deleted tasks (name unavailable)\" row instead of a separate identical \"Deleted task\" row for each one — matching how the Log's task filter already handles this." },
+      ],
+    },
     {
       version: "1.7.0",
       date: "September 2026",
@@ -1283,11 +1292,25 @@
     const sessions = focusSessions().filter((s) => s.endedAt >= from && s.endedAt < to);
     const groups = new Map();
     sessions.forEach((s) => {
-      const key = s.taskId || "_untagged";
-      if (!groups.has(key)) {
-        const label = s.taskId ? (sessionTaskTitle(s) || "Deleted task") : "Untagged";
-        groups.set(key, { label, sec: 0, count: 0, taskId: s.taskId || null });
+      let key, label, filterVal;
+      if (!s.taskId) {
+        key = "_untagged"; label = "Untagged"; filterVal = "_none";
+      } else {
+        const stillExists = state.tasks.some((t) => t.id === s.taskId);
+        if (stillExists) {
+          key = s.taskId; label = sessionTaskTitle(s); filterVal = s.taskId;
+        } else if (s.taskTitle) {
+          // Named at logging time, task since removed for good — keep its own
+          // row so it doesn't get lumped in with truly unrecoverable ones.
+          key = s.taskId; label = s.taskTitle + " (deleted)"; filterVal = s.taskId;
+        } else {
+          // No snapshot to go on (logged before that fix existed) — these are
+          // indistinguishable from each other, so club them into one row
+          // instead of a wall of identical "Deleted task" entries.
+          key = "_deleted_unknown"; label = "Deleted tasks (name unavailable)"; filterVal = "_deleted_unknown";
+        }
       }
+      if (!groups.has(key)) groups.set(key, { label, sec: 0, count: 0, filterVal });
       const g = groups.get(key);
       g.sec += s.durationSec;
       g.count += 1;
@@ -1313,13 +1336,8 @@
         '<span class="task-bd-time">' + fmtMs(r.sec) + "</span></div>" +
         '<div class="task-bd-track"><div class="task-bd-fill" style="width:' + pct + '%"></div></div>' +
         '<div class="task-bd-meta">' + r.count + " session" + (r.count === 1 ? "" : "s") + "</div>";
-      let filterVal;
-      if (r.taskId == null) filterVal = "_none";
-      else if (state.tasks.some((t) => t.id === r.taskId)) filterVal = r.taskId;
-      else if (r.label !== "Deleted task") filterVal = r.taskId;
-      else filterVal = "_deleted_unknown";
       const activate = () => {
-        state.logTaskFilter = filterVal;
+        state.logTaskFilter = r.filterVal;
         state.logFilter = "all";
         state.logDayFilter = null;
         state.logLimit = LOG_PAGE;
