@@ -187,6 +187,16 @@
       <div class="bars" id="weekBars"></div>
       <div class="bar-detail" id="weekBarDetail" hidden></div>
     </div>
+    <div class="card">
+      <h2>Time by task</h2>
+      <div class="filters" id="taskBreakdownPeriod">
+        <button class="chip" data-period="today">Today</button>
+        <button class="chip on" data-period="week">This week</button>
+        <button class="chip" data-period="month">This month</button>
+        <button class="chip" data-period="all">All time</button>
+      </div>
+      <div class="task-breakdown" id="taskBreakdown"></div>
+    </div>
     <div class="card"><h2>Activity</h2><div class="heat-wrap"><div class="heat-dows" id="heatDows" aria-hidden="true"></div><div class="heat"><div class="heat-months" id="heatMonths" aria-hidden="true"></div><div class="heat-grid" id="heatGrid"></div></div></div>
       <div class="heat-legend" id="heatLegend" hidden>
         <span>Less</span>
@@ -203,10 +213,6 @@
         <div class="hour-axis" id="hourAxis"></div>
         <div class="bars hour-bars" id="hourBars"></div>
       </div>
-    </div>
-    <div class="card" id="taskBreakdownCard">
-      <h2>Time by task</h2>
-      <div id="taskBreakdown"></div>
     </div>
   </section>
 

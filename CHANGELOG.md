@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0 — September 2026
+
+See where your time actually goes.
+
+- **New**: New "Time by task" card on Reports — a ranked breakdown of focus time per task, with Today/Week/Month/All-time views. Works the same whether your tasks are recurring subjects, one-off todos, or a mix — untagged sessions get their own bucket too.
+- **Improved**: Tapping a row jumps to the Log pre-filtered to that task, so you can see exactly which sessions made up the total.
+
 ## 1.6.0 — September 2026
 
 The exported report image gets a real redesign.

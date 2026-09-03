@@ -505,6 +505,16 @@ textarea {
   text-align: center;
   padding: 28px 12px;
 }
+.task-breakdown { display: flex; flex-direction: column; gap: var(--space-3); }
+.task-bd-row { cursor: pointer; padding: 4px 0; border-radius: var(--radius-sm); }
+.task-bd-row:hover, .task-bd-row:focus-visible { background: var(--surface-2); }
+.task-bd-top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); font-size: 14px; }
+.task-bd-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-bd-time { font-family: var(--font-mono); color: var(--text-dim); flex-shrink: 0; }
+.task-bd-track { height: 8px; border-radius: 999px; background: var(--track); margin-top: 6px; overflow: hidden; }
+.task-bd-fill { height: 100%; border-radius: 999px; background: var(--work); }
+.task-bd-meta { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+.task-bd-more { display: block; margin: var(--space-2) auto 0; font-size: 13px; color: var(--accent-ink, var(--text)); background: none; border: 0; padding: 6px; }
 .heat-wrap { display: flex; gap: 8px; align-items: flex-start; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
 .heat-dows {
   display: grid;

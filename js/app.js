@@ -8,9 +8,19 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.6.0";
+  const APP_VERSION = "1.7.0";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.7.0",
+      date: "September 2026",
+      title: "Cadence 1.7.0",
+      blurb: "See where your time actually goes.",
+      items: [
+        { tag: "New", text: "New \"Time by task\" card on Reports — a ranked breakdown of focus time per task, with Today/Week/Month/All-time views. Works the same whether your tasks are recurring subjects, one-off todos, or a mix — untagged sessions get their own bucket too." },
+        { tag: "Improved", text: "Tapping a row jumps to the Log pre-filtered to that task, so you can see exactly which sessions made up the total." },
+      ],
+    },
     {
       version: "1.6.0",
       date: "September 2026",
@@ -238,6 +248,7 @@
     taskPromptAsked: false,
     breakTaskId: null,
     editingLogNoteId: null,
+    reportTaskPeriod: "week",
   };
 
   const $ = (id) => document.getElementById(id);
@@ -1252,8 +1263,86 @@
     }
   }
 
+  /** Groups completed focus sessions by task for the selected period — works
+   *  the same whether "task" means a recurring subject, a one-off todo, or a
+   *  mix, since it's just grouping by whatever taskId a session was tagged
+   *  with. Untagged sessions and deleted tasks each get their own bucket. */
+  function renderTaskBreakdown() {
+    const box = $("taskBreakdown");
+    if (!box) return;
+    const now = Date.now();
+    const { todayFrom, weekFrom } = weekBounds(now);
+    const monthFrom = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+    const period = state.reportTaskPeriod || "week";
+    let from;
+    if (period === "today") from = todayFrom;
+    else if (period === "week") from = weekFrom;
+    else if (period === "month") from = monthFrom;
+    else from = 0;
+    const to = now + 86400000;
+    const sessions = focusSessions().filter((s) => s.endedAt >= from && s.endedAt < to);
+    const groups = new Map();
+    sessions.forEach((s) => {
+      const key = s.taskId || "_untagged";
+      if (!groups.has(key)) {
+        const label = s.taskId ? (sessionTaskTitle(s) || "Deleted task") : "Untagged";
+        groups.set(key, { label, sec: 0, count: 0, taskId: s.taskId || null });
+      }
+      const g = groups.get(key);
+      g.sec += s.durationSec;
+      g.count += 1;
+    });
+    const rows = Array.from(groups.values()).sort((a, b) => b.sec - a.sec);
+    const expanded = box.dataset.expanded === "1";
+    box.innerHTML = "";
+    if (!rows.length) {
+      box.innerHTML = '<p class="chart-empty">No focus sessions in this period yet.</p>';
+      return;
+    }
+    const max = rows[0].sec || 1;
+    const LIMIT = 8;
+    const visible = expanded ? rows : rows.slice(0, LIMIT);
+    visible.forEach((r) => {
+      const row = document.createElement("div");
+      row.className = "task-bd-row";
+      row.setAttribute("role", "button");
+      row.tabIndex = 0;
+      const pct = Math.max(3, Math.round((r.sec / max) * 100));
+      row.innerHTML =
+        '<div class="task-bd-top"><span class="task-bd-name">' + escapeHtml(r.label) + "</span>" +
+        '<span class="task-bd-time">' + fmtMs(r.sec) + "</span></div>" +
+        '<div class="task-bd-track"><div class="task-bd-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="task-bd-meta">' + r.count + " session" + (r.count === 1 ? "" : "s") + "</div>";
+      let filterVal;
+      if (r.taskId == null) filterVal = "_none";
+      else if (state.tasks.some((t) => t.id === r.taskId)) filterVal = r.taskId;
+      else if (r.label !== "Deleted task") filterVal = r.taskId;
+      else filterVal = "_deleted_unknown";
+      const activate = () => {
+        state.logTaskFilter = filterVal;
+        state.logFilter = "all";
+        state.logDayFilter = null;
+        state.logLimit = LOG_PAGE;
+        document.querySelectorAll("[data-filter]").forEach((x) => x.classList.toggle("on", x.dataset.filter === "all"));
+        showPage("log");
+        toast("Showing " + r.label);
+      };
+      row.onclick = activate;
+      row.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(); } };
+      box.appendChild(row);
+    });
+    if (rows.length > LIMIT) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "text-btn task-bd-more";
+      btn.textContent = expanded ? "Show less" : "Show all " + rows.length;
+      btn.onclick = () => { box.dataset.expanded = expanded ? "0" : "1"; renderTaskBreakdown(); };
+      box.appendChild(btn);
+    }
+  }
   function renderReports() {
     renderBadges();
+    renderTaskBreakdown();
     const now = Date.now();
     const { todayFrom, weekFrom } = weekBounds(now);
     const monthFrom = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
@@ -2186,6 +2275,16 @@
       state.taskView = b.dataset.taskView;
       document.querySelectorAll("[data-task-view]").forEach((x) => x.classList.toggle("on", x === b));
       renderTasks();
+    };
+  });
+
+  document.querySelectorAll("#taskBreakdownPeriod [data-period]").forEach((b) => {
+    b.onclick = () => {
+      state.reportTaskPeriod = b.dataset.period;
+      document.querySelectorAll("#taskBreakdownPeriod [data-period]").forEach((x) => x.classList.toggle("on", x === b));
+      const box = $("taskBreakdown");
+      if (box) box.dataset.expanded = "0";
+      renderTaskBreakdown();
     };
   });
 
