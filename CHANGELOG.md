@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.2 — September 2026
+
+Rename instead of delete-and-recreate.
+
+- **New**: Added "Rename" to a task's ⋯ menu — fixing a typo or renaming a subject no longer means deleting it and starting a fresh one. History stays attached to the same task, no "(deleted)" split.
+
 ## 1.7.1 — September 2026
 
 Clubbing the unclubbed.

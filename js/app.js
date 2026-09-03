@@ -8,9 +8,18 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.7.1";
+  const APP_VERSION = "1.7.2";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.7.2",
+      date: "September 2026",
+      title: "Cadence 1.7.2",
+      blurb: "Rename instead of delete-and-recreate.",
+      items: [
+        { tag: "New", text: "Added \"Rename\" to a task's ⋯ menu — fixing a typo or renaming a subject no longer means deleting it and starting a fresh one. History stays attached to the same task, no \"(deleted)\" split." },
+      ],
+    },
     {
       version: "1.7.1",
       date: "September 2026",
@@ -936,6 +945,7 @@
               '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>' +
             "</button>" +
             '<div class="task-menu" hidden>' +
+              '<button type="button" class="menu-item rename">Rename</button>' +
               '<button type="button" class="menu-item recur">' + (t.recurring ? "Stop repeating" : "Repeat daily") + "</button>" +
               '<button type="button" class="menu-item archive">' + (t.archived ? "Resume" : "Pause") + "</button>" +
               '<button type="button" class="menu-item dup">Duplicate</button>' +
@@ -1033,6 +1043,11 @@
           taskMenu.hidden = false;
           kebabBtn.setAttribute("aria-expanded", "true");
         }
+      };
+      row.querySelector(".menu-item.rename").onclick = (e) => {
+        e.stopPropagation();
+        closeAllTaskMenus();
+        startEdit(row, t);
       };
       row.querySelector(".menu-item.recur").onclick = (e) => {
         e.stopPropagation();
