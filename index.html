@@ -446,6 +446,26 @@
   </div>
 </div>
 
+<div class="modal" id="recurModal">
+  <div class="box">
+    <h3>Repeat this task</h3>
+    <p>Pick the days it should show up, or leave every day selected.</p>
+    <div class="recur-days" id="recurDaysPicker">
+      <button type="button" class="recur-day-btn" data-day="0">S</button>
+      <button type="button" class="recur-day-btn" data-day="1">M</button>
+      <button type="button" class="recur-day-btn" data-day="2">T</button>
+      <button type="button" class="recur-day-btn" data-day="3">W</button>
+      <button type="button" class="recur-day-btn" data-day="4">T</button>
+      <button type="button" class="recur-day-btn" data-day="5">F</button>
+      <button type="button" class="recur-day-btn" data-day="6">S</button>
+    </div>
+    <div class="tour-actions">
+      <button class="ghost-btn" id="recurStop" type="button">Stop repeating</button>
+      <button class="drawer-close" id="recurSave" type="button">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="taskPromptModal">
   <div class="box">
     <h3 id="taskPromptTitle">Which task?</h3>
@@ -462,6 +482,7 @@
     <h3 id="noteModalTitle">Session complete</h3>
     <p id="noteModalText">What did you work on? Skip anytime.</p>
     <textarea id="noteInput" rows="3" maxlength="280" placeholder="A short note for this focus block"></textarea>
+    <button type="button" class="text-btn danger-text" id="noteDelete" hidden>Delete this session</button>
     <div class="tour-actions">
       <button class="ghost-btn" id="noteSkip" type="button">Skip</button>
       <button class="drawer-close" id="noteSave" type="button">Save note</button>

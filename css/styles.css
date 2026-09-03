@@ -404,6 +404,7 @@ textarea {
   background: none; border: 0; color: var(--text); font: inherit; font-weight: 600;
   font-family: var(--font-display); padding: 0; text-decoration: underline; text-underline-offset: 3px;
 }
+.text-btn.danger-text { color: var(--danger, #e5484d); display: block; margin: var(--space-2) 0 0; font-size: 13px; }
 .report-actions { margin-top: var(--space-3); }
 .ghost-btn.inline { width: auto; display: inline-flex; padding: 10px var(--space-4); margin-top: 0; }
 
@@ -906,6 +907,14 @@ input[type="range"] { width: 100%; max-width: 100%; accent-color: var(--accent);
   font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim);
   margin: 2px 0 4px;
 }
+.recur-days { display: flex; gap: 8px; justify-content: space-between; margin-bottom: var(--space-4); }
+.recur-day-btn {
+  flex: 1; aspect-ratio: 1; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface-2); color: var(--text-dim); font: inherit; font-weight: 700; font-size: 14px;
+  display: grid; place-items: center;
+}
+.recur-day-btn.on { background: var(--accent); color: var(--accent-ink, var(--bg)); border-color: var(--accent); }
+.recur-day-btn:active { transform: scale(0.92); }
 .change-list { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-4); }
 .change-item { display: flex; gap: var(--space-3); align-items: flex-start; font-size: 14px; line-height: 1.45; }
 .change-tag {

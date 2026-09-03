@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.9.0 — September 2026
+
+Delete a mistake, repeat on your own days.
+
+- **New**: You can now delete a session entirely from the Edit note screen — for the stray misclick or wrong-duration session that shouldn't count. Removing it correctly walks back the task's pomodoro count too, so progress and streaks stay accurate.
+- **New**: Recurring tasks are no longer daily-only — pick specific days (e.g. Mon/Wed/Fri) from a task's ⋯ menu. It'll only show up on those days; "every day" still works exactly as before.
+
 ## 1.8.0 — September 2026
 
 Longer sessions, cleaner steps.

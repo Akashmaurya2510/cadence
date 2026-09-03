@@ -8,9 +8,19 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.8.0";
+  const APP_VERSION = "1.9.0";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.9.0",
+      date: "September 2026",
+      title: "Cadence 1.9.0",
+      blurb: "Delete a mistake, repeat on your own days.",
+      items: [
+        { tag: "New", text: "You can now delete a session entirely from the Edit note screen — for the stray misclick or wrong-duration session that shouldn't count. Removing it correctly walks back the task's pomodoro count too, so progress and streaks stay accurate." },
+        { tag: "New", text: "Recurring tasks are no longer daily-only — pick specific days (e.g. Mon/Wed/Fri) from a task's ⋯ menu. It'll only show up on those days; \"every day\" still works exactly as before." },
+      ],
+    },
     {
       version: "1.8.0",
       date: "September 2026",
@@ -443,6 +453,9 @@
       archived: !!t.archived,
       remainingSec: rem > 0 && rem <= 180 * 60 ? Math.floor(rem) : 0,
       recurring: !!t.recurring,
+      recurDays: Array.isArray(t.recurDays) && t.recurDays.length && t.recurDays.every((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+        ? Array.from(new Set(t.recurDays)).sort()
+        : null,
       doneOnDay: t.doneOnDay || null,
       deleted: !!t.deleted,
       deletedAt: t.deletedAt || null,
@@ -860,15 +873,31 @@
     }
   }
 
+  /** Whether a recurring task is scheduled for today. Non-recurring tasks and
+   *  recurring tasks with no specific days set (recurDays empty/null) always
+   *  apply — that's the original "every day" behavior, preserved for
+   *  backward compatibility with tasks created before day-picking existed. */
+  function taskAppliesToday(t) {
+    if (!t.recurring) return true;
+    if (!t.recurDays || !t.recurDays.length) return true;
+    return t.recurDays.includes(new Date().getDay());
+  }
+  function summarizeDays(days) {
+    if (!days || !days.length || days.length === 7) return "Daily";
+    const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    return days.slice().sort().map((d) => names[d]).join(", ");
+  }
   function visibleTasks() {
     const view = state.taskView;
     if (view === "deleted") {
       return state.tasks.filter((t) => t.deleted).sort((a, b) => (b.deletedAt || 0) - (a.deletedAt || 0));
     }
+    if (view === "paused") {
+      return state.tasks.filter((t) => t.archived && !t.deleted);
+    }
     let list = state.tasks.filter((t) => {
-      if (t.deleted) return false;
-      if (view === "paused") return t.archived;
-      if (t.archived) return false;
+      if (t.deleted || t.archived) return false;
+      if (!taskAppliesToday(t)) return false;
       if (view === "today") return t.due === "today" && !t.done;
       if (view === "later") return t.due === "later" && !t.done;
       return true;
@@ -946,7 +975,7 @@
       row.innerHTML =
         '<button class="chk" aria-label="Mark done"></button>' +
         '<div class="body">' +
-          '<button class="title">' + (t.recurring ? '<span class="recur-badge" title="Repeats daily">&#8635;</span> ' : "") + escapeHtml(t.title) + "</button>" +
+          '<button class="title">' + (t.recurring ? '<span class="recur-badge" title="Repeats ' + summarizeDays(t.recurDays).toLowerCase() + '">&#8635;</span> ' : "") + escapeHtml(t.title) + "</button>" +
           '<div class="meta">' +
             (t.target > 0 ? '<div class="pomo-bar" title="' + progressLabel + '"><span style="width:' + pct + '%"></span></div>' : "") +
             '<button type="button" class="meta-text progress pomo-hit">' + progressLabel + "</button>" +
@@ -965,7 +994,7 @@
             "</button>" +
             '<div class="task-menu" hidden>' +
               '<button type="button" class="menu-item rename">Rename</button>' +
-              '<button type="button" class="menu-item recur">' + (t.recurring ? "Stop repeating" : "Repeat daily") + "</button>" +
+              '<button type="button" class="menu-item recur">' + (t.recurring ? "Repeat: " + summarizeDays(t.recurDays) : "Repeat…") + "</button>" +
               '<button type="button" class="menu-item archive">' + (t.archived ? "Resume" : "Pause") + "</button>" +
               '<button type="button" class="menu-item dup">Duplicate</button>' +
               '<button type="button" class="menu-item del">Delete</button>' +
@@ -1078,10 +1107,7 @@
       row.querySelector(".menu-item.recur").onclick = (e) => {
         e.stopPropagation();
         closeAllTaskMenus();
-        t.recurring = !t.recurring;
-        if (t.recurring && t.done) t.doneOnDay = dayKey(Date.now());
-        save(); renderTasks();
-        toast(t.recurring ? "Will repeat daily" : "No longer repeating");
+        openRecurModal(t);
       };
       row.querySelector(".menu-item.archive").onclick = (e) => {
         e.stopPropagation();
@@ -2096,6 +2122,45 @@
     return !state.taskPromptAsked;
   }
 
+  let recurEditingTaskId = null;
+  function openRecurModal(t) {
+    recurEditingTaskId = t.id;
+    const days = (t.recurDays && t.recurDays.length) ? t.recurDays : [0, 1, 2, 3, 4, 5, 6];
+    document.querySelectorAll("#recurDaysPicker .recur-day-btn").forEach((b) => {
+      b.classList.toggle("on", days.includes(+b.dataset.day));
+    });
+    $("recurModal").classList.add("open");
+  }
+  document.querySelectorAll("#recurDaysPicker .recur-day-btn").forEach((b) => {
+    b.onclick = () => b.classList.toggle("on");
+  });
+  $("recurStop").onclick = () => {
+    const t = state.tasks.find((x) => x.id === recurEditingTaskId);
+    if (t) {
+      t.recurring = false;
+      t.recurDays = null;
+      save(); renderTasks();
+      toast("No longer repeating");
+    }
+    $("recurModal").classList.remove("open");
+  };
+  $("recurSave").onclick = () => {
+    const t = state.tasks.find((x) => x.id === recurEditingTaskId);
+    if (t) {
+      const selected = Array.from(document.querySelectorAll("#recurDaysPicker .recur-day-btn.on")).map((b) => +b.dataset.day);
+      if (!selected.length) {
+        toast("Pick at least a day, or use Stop repeating");
+        return;
+      }
+      const wasRecurring = t.recurring;
+      t.recurring = true;
+      t.recurDays = selected.length === 7 ? null : selected.sort();
+      if (!wasRecurring && t.done) t.doneOnDay = dayKey(Date.now());
+      save(); renderTasks();
+      toast("Repeats " + summarizeDays(t.recurDays).toLowerCase());
+    }
+    $("recurModal").classList.remove("open");
+  };
   let taskPromptResolver = null;
   /** Task ids most recently tagged to a break, newest first — powers the
    *  quick-pick chips so repeat picks like "Lunch" don't require scrolling
@@ -2754,6 +2819,35 @@
       : "What did you work on? Skip anytime.";
     $("noteSkip").textContent = editing ? "Cancel" : "Skip";
     $("noteSave").textContent = editing ? "Save" : "Save note";
+    const delBtn = $("noteDelete");
+    if (delBtn) delBtn.hidden = !editing;
+  }
+  /** Removes a session from history entirely — the one thing note-editing
+   *  alone couldn't do. Also walks back the pomodoro count it contributed to
+   *  its task, so a mis-logged session doesn't permanently inflate progress,
+   *  streaks, or the Time-by-task breakdown. */
+  async function deleteLogSession(sessionId) {
+    const s = state.sessions.find((x) => x.id === sessionId);
+    if (!s) return false;
+    const label = s.mode === "focus" ? "focus session" : (s.mode === "short" ? "short break" : "long break");
+    const ok = await askConfirm({
+      title: "Delete this session?",
+      text: "Removes this " + label + " from your history for good — this can't be undone.",
+      ok: "Delete",
+      danger: true,
+    });
+    if (!ok) return false;
+    state.sessions = state.sessions.filter((x) => x.id !== sessionId);
+    if (s.mode === "focus" && s.completed && s.taskId) {
+      const t = state.tasks.find((x) => x.id === s.taskId);
+      if (t) t.pomodoros = Math.max(0, t.pomodoros - 1);
+    }
+    save();
+    renderLog();
+    renderTasks();
+    if (state.page === "reports") renderReports();
+    toast("Session deleted");
+    return true;
   }
   function openNoteModal() {
     setNoteModalCopy(false);
@@ -2806,6 +2900,18 @@
   }
   $("noteSkip").onclick = () => closeNote(false);
   $("noteSave").onclick = () => closeNote(true);
+  if ($("noteDelete")) {
+    $("noteDelete").onclick = async () => {
+      const id = state.editingLogNoteId;
+      if (!id) return;
+      const ok = await deleteLogSession(id);
+      if (ok) {
+        state.editingLogNoteId = null;
+        $("noteModal").classList.remove("open");
+        setNoteModalCopy(false);
+      }
+    };
+  }
 
   function openReviewModal() {
     $("reviewInput").value = "";
