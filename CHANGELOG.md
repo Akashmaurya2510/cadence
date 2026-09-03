@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.1 — September 2026
+
+Housekeeping under the hood.
+
+- **Improved**: No visible changes this release — reorganized the codebase into clearly labeled sections and added a startup self-check that quietly flags data issues in the console, to keep things solid as more features get added.
+
 ## 1.9.0 — September 2026
 
 Delete a mistake, repeat on your own days.

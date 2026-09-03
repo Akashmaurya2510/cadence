@@ -8,9 +8,18 @@
   const MODE_LABEL = { focus: "Focus", short: "Short Break", long: "Long Break" };
   const THEME_COLORS = { graphite: "#15171b", linen: "#e9ebee", glacier: "#0d1420", espresso: "#1c1512", oled: "#000000", aurora: "#0a0e14" };
 
-  const APP_VERSION = "1.9.0";
+  const APP_VERSION = "1.9.1";
   const SCHEMA_VERSION = 2;
   const CHANGELOG = [
+    {
+      version: "1.9.1",
+      date: "September 2026",
+      title: "Cadence 1.9.1",
+      blurb: "Housekeeping under the hood.",
+      items: [
+        { tag: "Improved", text: "No visible changes this release — reorganized the codebase into clearly labeled sections and added a startup self-check that quietly flags data issues in the console, to keep things solid as more features get added." },
+      ],
+    },
     {
       version: "1.9.0",
       date: "September 2026",
@@ -307,6 +316,9 @@
     ticksG.appendChild(line);
   }
 
+  // ============================================================
+  // CORE UTILITIES — pure helpers with no dependency on app state
+  // ============================================================
   function uid() {
     return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
   }
@@ -368,6 +380,10 @@
     return "focus";
   }
 
+  // ============================================================
+  // PERSISTENCE — localStorage save/load, schema normalization,
+  // and merge-on-import logic. See DEV_NOTES.md for the data model.
+  // ============================================================
   function snapshot() {
     // Persist endsAt so a running timer survives refresh / app kill
     let endsAt = state.endsAt;
@@ -538,6 +554,9 @@
     return { tasks: Array.from(byId.values()), added };
   }
 
+  // ============================================================
+  // STATS & STREAKS
+  // ============================================================
   function mulberry32(a) {
     return function () {
       let t = a += 0x6D2B79F5;
@@ -592,6 +611,9 @@
   function totalFocusSec() {
     return focusSessions().reduce((a, s) => a + s.durationSec, 0);
   }
+  // ============================================================
+  // BADGES
+  // ============================================================
   const BADGES = [
     { id: "streak7", label: "7-day streak", group: "streak", check: () => longestStreak() >= 7 },
     { id: "streak30", label: "30-day streak", group: "streak", check: () => longestStreak() >= 30 },
@@ -661,6 +683,9 @@
   }
 
   let audioCtx = null;
+  // ============================================================
+  // AUDIO — tick sound, chime synth, mute state
+  // ============================================================
   function ctx() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === "suspended") audioCtx.resume();
@@ -770,6 +795,9 @@
     } catch (e) { /* ignore */ }
   }
   /** Haptic patterns — light taps for UI, stronger for session boundaries */
+  // ============================================================
+  // HAPTICS, THEME & VISUAL FEEDBACK
+  // ============================================================
   function vibrate(kind) {
     if (!settings.vibrate || !navigator.vibrate) return;
     const patterns = {
@@ -877,6 +905,9 @@
    *  recurring tasks with no specific days set (recurDays empty/null) always
    *  apply — that's the original "every day" behavior, preserved for
    *  backward compatibility with tasks created before day-picking existed. */
+  // ============================================================
+  // TASKS — CRUD, recurring schedule, soft-delete, rendering
+  // ============================================================
   function taskAppliesToday(t) {
     if (!t.recurring) return true;
     if (!t.recurDays || !t.recurDays.length) return true;
@@ -1220,6 +1251,10 @@
     toast("Task duplicated");
   }
 
+  // ============================================================
+  // TIMER DISPLAY (ring, pips, labels — not the timer engine itself,
+  // see "TIMER ENGINE" further down for tick/advance/logSession)
+  // ============================================================
   function renderTimer() {
     const total = durationFor(state.mode) || 1;
     const mm = pad(Math.floor(state.secondsLeft / 60));
@@ -1293,6 +1328,10 @@
     renderPips();
   }
 
+  // ============================================================
+  // REPORTS — weekly chart, task breakdown, trend badge, heatmap,
+  // hour-of-day chart. All read-only over state.sessions/state.tasks.
+  // ============================================================
   function weekBounds(now) {
     const todayFrom = startOfDay(now);
     const d = new Date(todayFrom);
@@ -1639,6 +1678,9 @@
     }
   }
 
+  // ============================================================
+  // SESSION LOG — filtering, search, task-filter dropdown, rendering
+  // ============================================================
   function filteredLog() {
     const q = state.logSearch.trim().toLowerCase();
     const todayFrom = startOfDay();
@@ -1781,6 +1823,10 @@
     }
   }
 
+  // ============================================================
+  // TIMER ENGINE — phase transitions, session logging, zen mode,
+  // tick loop, away-catch-up. The heart of the app.
+  // ============================================================
   function logSession(mode, elapsed, completed, tsOverride) {
     if (elapsed < 15 && !completed) return null;
     if (state.demo && completed && mode === "focus") {
@@ -2458,6 +2504,9 @@
   const settingsBody = $("settingsBody");
   const railItems = Array.from(document.querySelectorAll(".rail-item"));
   const settingsGroups = Array.from(document.querySelectorAll(".set-group"));
+  // ============================================================
+  // SETTINGS DRAWER — steppers, switches, sound picker, tabs
+  // ============================================================
   function switchSettingsTab(groupName) {
     railItems.forEach((btn) => btn.classList.toggle("active", btn.dataset.group === groupName));
     settingsGroups.forEach((g) => g.classList.toggle("active", g.dataset.group === groupName));
@@ -2790,6 +2839,10 @@
   }
 
   let confirmResolver = null;
+  // ============================================================
+  // MODALS — generic confirm dialog, note editor (create/edit/delete
+  // a session's note), post-goal review
+  // ============================================================
   function askConfirm({ title, text, ok, danger }) {
     $("confirmTitle").textContent = title || "Are you sure?";
     $("confirmText").textContent = text || "";
@@ -2960,6 +3013,9 @@
     toastUndo = null;
   };
 
+  // ============================================================
+  // CELEBRATIONS, TOUR & CHANGELOG
+  // ============================================================
   function burstConfetti() {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) { toast("Goal reached"); return; }
@@ -3099,6 +3155,9 @@
 
   $("pngBtn").addEventListener("click", () => exportReportPng());
 
+  // ============================================================
+  // REPORT IMAGE EXPORT — canvas-drawn PNG summary card
+  // ============================================================
   function exportReportPng() {
     const canvas = document.createElement("canvas");
     const W = 1080, H = 1520;
@@ -3333,10 +3392,52 @@
     }
   });
 
+  /** Diagnostic-only pass over loaded data, run once at startup. Never
+   *  mutates state and never surfaces anything to the person using the app —
+   *  it just logs to the console so a data-integrity issue (a bad merge, a
+   *  bug in a future edit, manually-edited localStorage, etc.) shows up
+   *  early instead of silently producing weird numbers on Reports. Wrapped
+   *  in try/catch at the call site as an extra safety net. */
+  function runStartupSelfCheck() {
+    const warnings = [];
+    const taskIds = new Map();
+    state.tasks.forEach((t) => {
+      if (taskIds.has(t.id)) warnings.push("Duplicate task id: " + t.id);
+      taskIds.set(t.id, (taskIds.get(t.id) || 0) + 1);
+      if ((t.pomodoros || 0) < 0) warnings.push("Task \"" + t.title + "\" has negative pomodoros: " + t.pomodoros);
+    });
+    if (state.activeTaskId && !state.tasks.some((t) => t.id === state.activeTaskId)) {
+      warnings.push("activeTaskId points to a task that no longer exists: " + state.activeTaskId);
+    }
+    const sessionIds = new Set();
+    let orphanedNoSnapshot = 0;
+    state.sessions.forEach((s) => {
+      if (sessionIds.has(s.id)) warnings.push("Duplicate session id: " + s.id);
+      sessionIds.add(s.id);
+      if (typeof s.startedAt === "number" && typeof s.endedAt === "number" && s.endedAt < s.startedAt) {
+        warnings.push("Session " + s.id + " ends before it starts");
+      }
+      if (s.completed && (!s.durationSec || s.durationSec <= 0)) {
+        warnings.push("Completed session " + s.id + " has a non-positive duration");
+      }
+      if (s.taskId && !state.tasks.some((t) => t.id === s.taskId) && !s.taskTitle) orphanedNoSnapshot++;
+    });
+    if (orphanedNoSnapshot) {
+      warnings.push(orphanedNoSnapshot + " session(s) reference a deleted task with no name snapshot (pre-1.7 data — expected, not new corruption)");
+    }
+    if (settings.focus < 15 || settings.focus > 180) warnings.push("settings.focus out of expected 15–180 range: " + settings.focus);
+    if (settings.short <= 0 || settings.long <= 0) warnings.push("settings.short/long has a non-positive value");
+    if (warnings.length) {
+      console.warn("[Cadence self-check] " + warnings.length + " item(s) found:");
+      warnings.forEach((w) => console.warn("  · " + w));
+    }
+  }
+
   const hadData = load();
   if (resetRecurringTasks()) save();
   if (purgeExpiredTrash()) save();
   checkBadgeUnlocks(true);
+  try { runStartupSelfCheck(); } catch (e) { /* diagnostic only — never let this break startup */ }
   const hash = (location.hash || "").replace("#", "");
   try { renderAll(); } catch (e) { console.error(e); toast("Something went wrong rendering. Try Settings → Clear, or import a backup."); }
   resumeTimerIfNeeded();
